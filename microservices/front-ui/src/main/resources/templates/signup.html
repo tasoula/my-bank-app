@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
+<meta charset="UTF-8"/>
 
 <head>
     <title>Регистрация</title>
@@ -41,6 +42,12 @@
         </td>
     </tr>
     <tr>
+        <td style="font-weight:bold;">email</td>
+        <td>
+            <input name="Email" type="text" th:value="${email}" style="width:100%" required/>
+        </td>
+    </tr>
+    <tr>
         <td style="font-weight:bold;">Дата рождения </td>
         <td>
             <input name="birthdate" type="date" th:value="${birthdate}" style="width:100%" required/>
@@ -54,5 +61,4 @@
 </table>
 </form>
 </body>
-
 </html>
