@@ -1,9 +1,12 @@
 package io.github.tasoula.front_ui.controller;
 
+import io.github.tasoula.front_ui.dto.UserRegistrationDto;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -21,25 +24,21 @@ public class UserController {
     }
 
     @GetMapping("/main")
-    public Mono<String> mainPage(Model model) {
-        // Здесь должна быть логика получения данных пользователя и других пользователей
-        // Заглушки для примера:
-        model.addAttribute("login", "currentUser");
-        model.addAttribute("name", "Иванов Иван");
-        model.addAttribute("birthdate", LocalDate.of(1990, 1, 1));
-        model.addAttribute("users", List.of(
-                new UserInfo("user1", "Петров Петр"),
-                new UserInfo("user2", "Сидорова Анна")
-        ));
-        // Ошибки изначально null
-        model.addAttribute("passwordErrors", null);
-        model.addAttribute("userAccountErrors", null);
-        model.addAttribute("cashErrors", null);
-        model.addAttribute("transferOtherErrors", null);
+    public Mono<String> mainPage(@AuthenticationPrincipal Mono<UserDetails> userDetailsMono, Model model) {
 
-        return Mono.just("main");
+        return userDetailsMono.cast(UserRegistrationDto.class)
+                .flatMap(user->{
+                    model.addAttribute("login", user.getLogin());
+                    model.addAttribute("name", user.getName());
+                    model.addAttribute("birthdate", user.getBirthdate());
+                    model.addAttribute("users", List.of(// Здесь должна быть логика получения данных других пользователей
+                            new UserInfo("user1", "Петров Петр"),
+                            new UserInfo("user2", "Сидорова Анна")));
+                    return Mono.just("main");
+                });
     }
 
+    /*
     @PostMapping("/user/{login}/editPassword")
     public Mono<String> editPassword(
             @PathVariable String login,
@@ -113,8 +112,6 @@ public class UserController {
         }
     }
 
-
-
     // Вспомогательные методы для валидации (заглушки)
     private List<String> validatePassword(String password, String confirmPassword) {
         // Реализуйте логику валидации пароля
@@ -143,7 +140,7 @@ public class UserController {
             model.addAttribute(errorAttribute, errors);
         });
     }
-
+*/
     @AllArgsConstructor
     @Getter
     @Setter
