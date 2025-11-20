@@ -274,7 +274,6 @@
             </table>
         </form>
     </td></tr>
-
     <!-- НОВЫЙ БЛОК: Конвертация валют (с выбором счета) -->
     <tr><td style="padding:5px;">
         <form method="post" th:action="${'/user/'+login+'/exchange'}">
@@ -285,35 +284,44 @@
                 <tr th:if="${exchangeErrors!=null}" th:each="exchangeError : ${exchangeErrors}">
                     <td colspan="4" class="error" th:text="${exchangeError}"/>
                 </tr>
-                <tr th:if="${fromCurrencyCode != null and toCurrencyCode != null}">
-                    <td colspan="2" style="font-weight:bold; text-align:center; border: 1px solid #ccc;">Продать</td>
-                    <td colspan="2" style="font-weight:bold; text-align:center; border: 1px solid #ccc;">Купить</td>
-                </tr>
-                <tr th:if="${fromCurrencyCode != null and toCurrencyCode != null}">
-                    <td colspan="2" th:text="${fromCurrencyCode}" style="text-align:center; border: 1px solid #ccc;"></td>
-                    <td colspan="2" th:text="${toCurrencyCode}" style="text-align:center; border: 1px solid #ccc;"></td>
-                </tr>
-                <tr th:if="${fromCurrencyCode != null and toCurrencyCode != null}">
-                    <td colspan="2" th:text="${'1 ' + fromCurrencyCode + ' = ' + #numbers.formatDecimal(rateFromCurrencyToRub, 0, 'COMMA', 4, 'POINT') + ' RUB'}" style="text-align:center; border: 1px solid #ccc;"></td>
-                    <td colspan="2" th:text="${'1 ' + toCurrencyCode + ' = ' + #numbers.formatDecimal(rateToCurrencyToRub, 0, 'COMMA', 4, 'POINT') + ' RUB'}" style="text-align:center; border: 1px solid #ccc;"></td>
-                </tr>
-                <!-- Amount to exchange -->
                 <tr>
-                    <td style="font-weight:bold;">Сумма для продажи</td>
-                    <td colspan="3">
-                        <input name="amount" type="number" step="0.01" min="0.01" style="width:100%" required placeholder="Введите сумму для конвертации"/>
+                    <td style="font-weight:bold; width:25%; text-align:center;">Валюта</td>
+                    <td style="font-weight:bold; width:25%; text-align:center;">Курс (продажа)</td>
+                    <td style="font-weight:bold; width:25%; text-align:center;">Курс (покупка)</td>
+                    <td style="font-weight:bold; width:25%;"></td>
+                </tr>
+                <tr th:if="${fromCurrencyCode != null and toCurrencyCode != null}">
+                    <td th:text="${fromCurrencyCode}" style="text-align:center;"></td>
+                    <td th:text="${#numbers.formatDecimal(rateFromCurrencyToRub, 0, 'COMMA', 4, 'POINT') + ' RUB'}" style="text-align:center;"></td>
+                    <td th:text="${#numbers.formatDecimal(rateToCurrencyToRub, 0, 'COMMA', 4, 'POINT') + ' RUB'}" style="text-align:center;"></td>
+                    <td></td>
+                </tr>
+                <!-- Amount to exchange (Sell) -->
+                <tr>
+                    <td style="font-weight:bold;">Продать</td>
+                    <td>
+                        <input name="amountSell" type="number" step="0.01" min="0.01" style="width:100%" placeholder="Сумма для продажи"/>
+                    </td>
+                    <td></td>
+                    <td style="text-align:right">
+                        <button name="action" value="sell">Продать</button>
                     </td>
                 </tr>
-                <!-- Button to perform the exchange -->
+                <!-- Amount to exchange (Buy) -->
                 <tr>
-                    <td style="text-align:right" colspan="4">
-                        <button>Обменять</button>
+                    <td style="font-weight:bold;">Купить</td>
+                    <td>
+                        <input name="amountBuy" type="number" step="0.01" min="0.01" style="width:100%" placeholder="Сумма для покупки"/>
+                    </td>
+                    <td></td>
+                    <td style="text-align:right">
+                        <button name="action" value="buy">Купить</button>
                     </td>
                 </tr>
+
             </table>
         </form>
     </td></tr>
-
 </table>
 </body>
 </html>

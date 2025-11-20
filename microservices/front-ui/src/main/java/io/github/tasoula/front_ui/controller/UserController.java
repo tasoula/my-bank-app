@@ -28,12 +28,18 @@ public class UserController {
 
         return userDetailsMono.cast(UserRegistrationDto.class)
                 .flatMap(user->{
+                    // todo Передаем в модель пользователя со списком его счетов
                     model.addAttribute("login", user.getLogin());
                     model.addAttribute("name", user.getName());
                     model.addAttribute("birthdate", user.getBirthdate());
-                    model.addAttribute("users", List.of(// Здесь должна быть логика получения данных других пользователей
+                    model.addAttribute("users", List.of(
+                            // Здесь должна быть логика получения данных других пользователей
+                            // Отображать только тех, у кого есть счета в заданной валюте?
+                            // Или отображать всех, но если счета в нужной валюте нет, то выдать ошибку?
+                            // Наверное 2е, т.к. пользователю в этом случае будет понятнее, что делать
                             new UserInfo("user1", "Петров Петр"),
                             new UserInfo("user2", "Сидорова Анна")));
+                    // todo так же в модель надо передать список доступных валют с курсами
                     return Mono.just("main");
                 });
     }
@@ -140,6 +146,44 @@ public class UserController {
             model.addAttribute(errorAttribute, errors);
         });
     }
+
+       @PostMapping("/user/{login}/exchange")
+   public String performExchange(@PathVariable String login,
+                                 @RequestParam(value = "amountSell", required = false) Double amountSell,
+                                 @RequestParam(value = "amountBuy", required = false) Double amountBuy,
+                                 @RequestParam("action") String action, // REQUIRED PARAMETER!
+                                 Model model) {
+
+       // Validation: Only ONE of amountSell or amountBuy should be present.
+       if ((amountSell != null && amountBuy != null) || (amountSell == null && amountBuy == null)) {
+           model.addAttribute("exchangeErrors", List.of("Заполните только одно поле: 'Купить' или 'Продать'."));
+           // Redisplay the form with the error message.  You'll need to reload currency rates here too.
+           return "your-view-name"; // Replace with the actual view name.
+       }
+
+       try {
+           if ("sell".equals(action)) {
+               // Perform the sell operation using amountSell
+               System.out.println("Selling " + amountSell + " " + ...); // Implement your logic
+           } else if ("buy".equals(action)) {
+               // Perform the buy operation using amountBuy
+               System.out.println("Buying " + amountBuy + " " + ...);   // Implement your logic
+           } else {
+               // Handle invalid action (shouldn't happen if the buttons are configured correctly)
+               model.addAttribute("exchangeErrors", List.of("Неизвестное действие."));
+               return "your-view-name";
+           }
+
+           // Success - redirect or redisplay the form with a success message
+           return "redirect:/user/" + login; // Example: Redirect to the user's page.
+
+       } catch (Exception e) {
+           // Handle exceptions (e.g., insufficient funds, invalid amount)
+           model.addAttribute("exchangeErrors", List.of("Ошибка обмена: " + e.getMessage()));
+           // Redisplay the form with the error message
+           return "your-view-name";
+       }
+   }
 */
     @AllArgsConstructor
     @Getter

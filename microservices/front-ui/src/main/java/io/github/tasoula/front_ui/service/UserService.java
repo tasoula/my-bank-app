@@ -31,6 +31,8 @@ public class UserService implements ReactiveUserDetailsService {
     }
 
     public Mono<UserDetails> createUser(UserRegistrationDto userRegistrationDto) {
+        // todo обращение в сервис Accounts
+        // будем создавать по умолчанию рублевый счет
         return Mono.fromCallable(() -> {
             if (repository.containsKey(userRegistrationDto.getLogin())) {
                 throw new UserAlreadyExistsException("пользователь с таким логином уже зарегистрирован");
