@@ -51,57 +51,47 @@ public class SignupController {
     public Mono<String> signup(@Valid @ModelAttribute UserRegistrationDto userRegistrationDto,
                                BindingResult bindingResult,
                                Model model,
-                               ServerWebExchange exchange
-    ) {
-        // Здесь должна быть логика валидации и регистрации
-        if (!userRegistrationDto.getPassword().equals(userRegistrationDto.getConfirm_password())) {
-            bindingResult.rejectValue("confirm_password", "error.userRegistrationDto", "Пароли не совпадают");
-        }
+                               ServerWebExchange exchange) {
 
-        // Проверка возраста
-        if (userRegistrationDto.getBirthdate() != null) {
-            Period period = Period.between(userRegistrationDto.getBirthdate(), LocalDate.now());
-            if (period.getYears() < 18) {
-                bindingResult.rejectValue("birthdate", "error.userRegistrationDto", "Пользователь должен быть старше 18 лет");
-            }
-        }
+        // Логика валидации, которая может быть вынесена в отдельный Mono
+        return validateUserRegistration(userRegistrationDto, bindingResult)
+                .flatMap(isValid -> {
+                    if (!isValid) {
+                        List<String> errors = new ArrayList<>();
+                        bindingResult.getAllErrors().forEach(error -> errors.add(error.getDefaultMessage()));
+                        model.addAttribute("errors", errors);
+                        return Mono.just("signup"); // Возвращаем страницу с ошибками
+                    }
 
-        if (!bindingResult.hasErrors()) {
-            return userService.createUser(userRegistrationDto)
-                    .flatMap(userDetails -> {
-                        Authentication authentication = new UsernamePasswordAuthenticationToken(
-                                userRegistrationDto.getUsername(),
-                                userRegistrationDto.getPassword()
-                        );
-
-
-                        return authenticationManager.authenticate(authentication) // Authenticate user
-                                .flatMap(auth -> {
-                                    // Сохраняем аутентификацию в SecurityContext
-                                    SecurityContext securityContext = new SecurityContextImpl(auth);
-                                    return securityContextRepository.save(exchange, securityContext)
-                                            .then(Mono.just("redirect:/main"));
-                                });
-                    })
-                    .onErrorResume(UserAlreadyExistsException.class, ex -> {
-                        model.addAttribute("errors", List.of(ex.getMessage()));
-                        return Mono.just("signup");
-                    });
-        } else {
-            List<String> errors = new ArrayList<>();
-            bindingResult.getAllErrors().forEach(error -> {
-                errors.add(error.getDefaultMessage());
-            });
-
-            model.addAttribute("errors", errors);
-            return Mono.just("signup");
-        }
+                    // Логика регистрации и аутентификации
+                    return userService.createUser(userRegistrationDto)
+                            .flatMap(userDetails -> {
+                                Authentication authentication = new UsernamePasswordAuthenticationToken(
+                                        userRegistrationDto.getUsername(),
+                                        userRegistrationDto.getPassword()
+                                );
+                                return authenticationManager.authenticate(authentication) // Аутентифицируем пользователя
+                                        .flatMap(auth -> {
+                                            // Сохраняем аутентификацию в SecurityContext
+                                            SecurityContext securityContext = new SecurityContextImpl(auth);
+                                            return securityContextRepository.save(exchange, securityContext)
+                                                    .then(Mono.just("redirect:/main"));
+                                        });
+                            })
+                            .onErrorResume(UserAlreadyExistsException.class, ex -> {
+                                model.addAttribute("errors", List.of(ex.getMessage()));
+                                return Mono.just("signup"); // Возвращаем страницу с ошибками
+                            });
+                });
     }
-    private Mono<Void> validateSignup(UserRegistrationDto userRegistrationDto, BindingResult bindingResult) {
-        // Здесь должна быть логика валидации и регистрации
+
+    // Отдельный метод для валидации, возвращающий Mono<Boolean>
+    private Mono<Boolean> validateUserRegistration(UserRegistrationDto userRegistrationDto, BindingResult bindingResult) {
+        // Проверка паролей
         if (!userRegistrationDto.getPassword().equals(userRegistrationDto.getConfirm_password())) {
             bindingResult.rejectValue("confirm_password", "error.userRegistrationDto", "Пароли не совпадают");
         }
+
         // Проверка возраста
         if (userRegistrationDto.getBirthdate() != null) {
             Period period = Period.between(userRegistrationDto.getBirthdate(), LocalDate.now());
@@ -109,7 +99,8 @@ public class SignupController {
                 bindingResult.rejectValue("birthdate", "error.userRegistrationDto", "Пользователь должен быть старше 18 лет");
             }
         }
-        return Mono.empty();
+
+        return Mono.just(!bindingResult.hasErrors()); // Возвращаем результат валидации
     }
 }
 
