@@ -15,6 +15,7 @@ import org.springframework.security.web.server.SecurityWebFilterChain;
 import org.springframework.security.web.server.authentication.ServerAuthenticationSuccessHandler;
 import org.springframework.security.web.server.authentication.logout.RedirectServerLogoutSuccessHandler;
 import org.springframework.security.web.server.authorization.HttpStatusServerAccessDeniedHandler;
+import org.springframework.security.web.server.context.ServerSecurityContextRepository;
 import org.springframework.security.web.server.context.WebSessionServerSecurityContextRepository;
 import org.springframework.web.server.ServerWebExchange;
 
@@ -40,16 +41,16 @@ public class SecurityConfig {
                         }
                 )
                 // Форма логина для пользователей
-                .formLogin(form -> form.authenticationSuccessHandler(successHandler())
-                )
-    /*            .logout(logoutSpec -> logoutSpec
-                        // По умолчанию URL для разлогинивания - /logout (GET).
-                        // После успешного разлогинивания редирект на /login?logout.
-                        // Если хотите другой редирект, можно указать так:
-                        .logoutSuccessHandler(new RedirectServerLogoutSuccessHandler()) //URI.create("/login?logout")))
-                )
+                /*           .formLogin(form -> form.authenticationSuccessHandler(successHandler())
+                         )
+               /*            .logout(logoutSpec -> logoutSpec
+                                   // По умолчанию URL для разлогинивания - /logout (GET).
+                                   // После успешного разлогинивания редирект на /login?logout.
+                                   // Если хотите другой редирект, можно указать так:
+                                   .logoutSuccessHandler(new RedirectServerLogoutSuccessHandler()) //URI.create("/login?logout")))
+                           )
 
-     */
+                */
              //   .anonymous(anonymous -> anonymous
             //            .principal("guestUser")
             //            .authorities("ROLE_GUEST")
@@ -70,6 +71,11 @@ public class SecurityConfig {
             exchange.getResponse().getHeaders().setLocation(URI.create("/main"));
             return exchange.getResponse().setComplete();
         };
+    }
+
+    @Bean
+    public ServerSecurityContextRepository securityContextRepository() {
+        return new WebSessionServerSecurityContextRepository();
     }
 
     @Bean

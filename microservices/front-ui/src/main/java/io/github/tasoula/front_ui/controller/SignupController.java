@@ -4,17 +4,21 @@ import io.github.tasoula.front_ui.dto.UserRegistrationDto;
 import io.github.tasoula.front_ui.exceptions.UserAlreadyExistsException;
 import io.github.tasoula.front_ui.service.UserService;
 import jakarta.validation.Valid;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.ReactiveAuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.ReactiveSecurityContextHolder;
 import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextImpl;
+import org.springframework.security.web.server.context.ServerSecurityContextRepository;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.server.ServerWebExchange;
 import org.springframework.web.server.WebSession;
 import reactor.core.publisher.Mono;
 
@@ -28,6 +32,9 @@ public class SignupController {
 
     private final UserService userService;
     private final ReactiveAuthenticationManager authenticationManager;
+
+    @Autowired
+    private ServerSecurityContextRepository securityContextRepository;
 
     public SignupController(UserService userService, ReactiveAuthenticationManager authenticationManager) {
         this.userService = userService;
@@ -43,7 +50,8 @@ public class SignupController {
     @PostMapping("/signup")
     public Mono<String> signup(@Valid @ModelAttribute UserRegistrationDto userRegistrationDto,
                                BindingResult bindingResult,
-                               Model model
+                               Model model,
+                               ServerWebExchange exchange
     ) {
         // Здесь должна быть логика валидации и регистрации
         if (!userRegistrationDto.getPassword().equals(userRegistrationDto.getConfirm_password())) {
@@ -66,26 +74,19 @@ public class SignupController {
                                 userRegistrationDto.getPassword()
                         );
 
+
                         return authenticationManager.authenticate(authentication) // Authenticate user
                                 .flatMap(auth -> {
-                                    return Mono.defer(() -> ReactiveSecurityContextHolder.getContext()
-                                            .map(SecurityContext::getAuthentication)
-                                            .defaultIfEmpty(auth)
-                                            .switchIfEmpty(Mono.just(auth))
-                                            .doOnNext(authenticationResult -> {
-                                                ReactiveSecurityContextHolder.getContext().subscribe(securityContext -> {
-                                                    securityContext.setAuthentication(auth);
-                                                });
-                                            }).then(Mono.just("redirect:/main")));
+                                    // Сохраняем аутентификацию в SecurityContext
+                                    SecurityContext securityContext = new SecurityContextImpl(auth);
+                                    return securityContextRepository.save(exchange, securityContext)
+                                            .then(Mono.just("redirect:/main"));
                                 });
-
                     })
                     .onErrorResume(UserAlreadyExistsException.class, ex -> {
                         model.addAttribute("errors", List.of(ex.getMessage()));
                         return Mono.just("signup");
                     });
-
-
         } else {
             List<String> errors = new ArrayList<>();
             bindingResult.getAllErrors().forEach(error -> {
@@ -96,14 +97,11 @@ public class SignupController {
             return Mono.just("signup");
         }
     }
-
-
     private Mono<Void> validateSignup(UserRegistrationDto userRegistrationDto, BindingResult bindingResult) {
         // Здесь должна быть логика валидации и регистрации
         if (!userRegistrationDto.getPassword().equals(userRegistrationDto.getConfirm_password())) {
             bindingResult.rejectValue("confirm_password", "error.userRegistrationDto", "Пароли не совпадают");
         }
-
         // Проверка возраста
         if (userRegistrationDto.getBirthdate() != null) {
             Period period = Period.between(userRegistrationDto.getBirthdate(), LocalDate.now());
