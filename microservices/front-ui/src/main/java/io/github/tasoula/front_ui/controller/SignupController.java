@@ -5,6 +5,8 @@ import io.github.tasoula.front_ui.exceptions.UserAlreadyExistsException;
 import io.github.tasoula.front_ui.service.UserService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.ReactiveAuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -14,18 +16,22 @@ import org.springframework.security.core.context.SecurityContextImpl;
 import org.springframework.security.web.server.context.ServerSecurityContextRepository;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.util.MultiValueMap;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.server.ServerWebExchange;
 import org.springframework.web.server.WebSession;
 import reactor.core.publisher.Mono;
 
+import java.net.URI;
 import java.time.LocalDate;
 import java.time.Period;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Controller
 public class SignupController {
@@ -84,6 +90,39 @@ public class SignupController {
                             });
                 });
     }
+
+    @GetMapping("/login")
+    public Mono<String> login(WebSession session
+            , ServerWebExchange exchange,
+                              Model model) {
+
+        MultiValueMap<String, String> queryParams = exchange.getRequest().getQueryParams();
+        // Проверяем наличие ключа "error" в карте параметров
+        if (queryParams.containsKey("error")) {
+            // Логика для запросов типа http://localhost:8080/login?error
+            // или http://localhost:8080/login?error=someValue
+            model.addAttribute("error", "error");
+           }
+        if (queryParams.containsKey("logout")) {
+            model.addAttribute("logout", "logout");
+        }
+
+        return session.changeSessionId()
+                .thenReturn("login.html");
+    }
+
+
+    @GetMapping("/logout")
+    public Mono<ResponseEntity<Void>> logout(WebSession session) {
+        return session.invalidate()
+                .thenReturn(
+                        ResponseEntity.status(HttpStatus.FOUND)
+                                .location(URI.create("/login?logout"))
+                                .build()
+                );
+    }
+
+
 
     // Отдельный метод для валидации, возвращающий Mono<Boolean>
     private Mono<Boolean> validateUserRegistration(UserRegistrationDto userRegistrationDto, BindingResult bindingResult) {
