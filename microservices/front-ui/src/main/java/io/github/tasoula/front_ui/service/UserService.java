@@ -2,6 +2,7 @@ package io.github.tasoula.front_ui.service;
 
 import io.github.tasoula.front_ui.dto.UserRegistrationDto;
 import io.github.tasoula.front_ui.exceptions.UserAlreadyExistsException;
+import io.github.tasoula.front_ui.model.User;
 import jakarta.validation.constraints.*;
 import org.springframework.security.core.userdetails.ReactiveUserDetailsService;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -13,13 +14,14 @@ import java.awt.event.MouseMotionAdapter;
 import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 @Service
 public class UserService implements ReactiveUserDetailsService {
 
     private final PasswordEncoder passwordEncoder;
 
-    private final Map<String, UserRegistrationDto> repository = new HashMap<>();
+    private final Map<String, User> repository = new HashMap<>();
 
     public UserService(PasswordEncoder passwordEncoder) {
         this.passwordEncoder = passwordEncoder;
@@ -38,11 +40,11 @@ public class UserService implements ReactiveUserDetailsService {
                 throw new UserAlreadyExistsException("пользователь с таким логином уже зарегистрирован");
             } else {
                 String password = passwordEncoder.encode(userRegistrationDto.getPassword());
-                UserRegistrationDto savedUser = new UserRegistrationDto(
+                User savedUser = new User(
+                        UUID.randomUUID(),
                         // todo в классе для UserDetails будет id пользователя
                         userRegistrationDto.getLogin(),
                         password,
-                        password, //todo повтор пароля можно не хранить, нужен другой dto для одного зашифрованного пароля
                         userRegistrationDto.getName(), // фамилия и имя пользователя
                         userRegistrationDto.getEmail(),
                         userRegistrationDto.getBirthdate()
@@ -54,7 +56,7 @@ public class UserService implements ReactiveUserDetailsService {
         });
     }
 
-    public Mono<Void> deleteUser(UserRegistrationDto user) {
+    public Mono<Void> deleteUser(User user) {
         repository.remove(user.getLogin());
         return Mono.empty();
     }

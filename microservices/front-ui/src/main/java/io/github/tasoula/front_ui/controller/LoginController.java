@@ -3,6 +3,7 @@ package io.github.tasoula.front_ui.controller;
 import io.github.tasoula.front_ui.dto.UserRegistrationDto;
 import io.github.tasoula.front_ui.exceptions.NonZeroAccountsException;
 import io.github.tasoula.front_ui.exceptions.UserAlreadyExistsException;
+import io.github.tasoula.front_ui.model.User;
 import io.github.tasoula.front_ui.service.UserService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -73,7 +74,7 @@ public class LoginController {
                     return userService.createUser(userRegistrationDto)
                             .flatMap(userDetails -> {
                                 Authentication authentication = new UsernamePasswordAuthenticationToken(
-                                        userRegistrationDto.getUsername(),
+                                        userRegistrationDto.getLogin(),
                                         userRegistrationDto.getPassword()
                                 );
                                 return authenticationManager.authenticate(authentication) // Аутентифицируем пользователя
@@ -100,7 +101,7 @@ public class LoginController {
         // если удаление прошло успешно, то аннулируем сессию и переходим на /login?deleted
 
         return userDetailsMono
-                .cast(UserRegistrationDto.class)
+                .cast(User.class)
                 .flatMap(userDto -> userService.deleteUser(userDto)
                         .then(Mono.just("redirect:/logout?deleted"))
                         .onErrorResume(NonZeroAccountsException.class, ex -> {

@@ -1,6 +1,7 @@
 package io.github.tasoula.front_ui.controller;
 
 import io.github.tasoula.front_ui.dto.UserRegistrationDto;
+import io.github.tasoula.front_ui.model.User;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
@@ -26,7 +27,7 @@ public class UserController {
     @GetMapping("/main")
     public Mono<String> mainPage(@AuthenticationPrincipal Mono<UserDetails> userDetailsMono, Model model) {
 
-        return userDetailsMono.cast(UserRegistrationDto.class)
+        return userDetailsMono.cast(User.class)
                 .flatMap(user->{
                     // todo Передаем в модель пользователя со списком его счетов
                     model.addAttribute("login", user.getLogin());

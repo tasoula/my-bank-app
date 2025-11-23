@@ -13,7 +13,7 @@ import java.util.Collections;
 
 @Data
 @AllArgsConstructor
-public class UserRegistrationDto implements UserDetails {
+public class UserRegistrationDto {
     @NotBlank(message = "Логин не может быть пустым")
     @Size(min = 3, max = 20, message = "Логин должен быть от 3 до 20 символов")
     String login;
@@ -35,14 +35,4 @@ public class UserRegistrationDto implements UserDetails {
     @NotNull(message = "Дата рождения не может быть пустой")
     @Past(message = "Дата рождения должна быть в прошлом")
     LocalDate birthdate;
-
-    @Override
-    public Collection<? extends GrantedAuthority> getAuthorities() {
-        return Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER"));
-    }
-
-    @Override
-    public String getUsername() {
-        return login;
-    }
 }
