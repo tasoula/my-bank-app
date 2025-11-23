@@ -23,6 +23,9 @@
         <tr th:if="${logout}">
             <td style="color:green;font-weight:bold;" colspan="2">Вы успешно вышли из системы.</td>
         </tr>
+        <tr th:if="${deleted}">
+            <td style="color:green;font-weight:bold;" colspan="2">Аккаунт успешно удалён.</td>
+        </tr>
         <!-- Общие ошибки, если они передаются через модель -->
         <tr th:each="error : ${errors}">
             <td style="color:red;" th:text="${error}" colspan="2"/>

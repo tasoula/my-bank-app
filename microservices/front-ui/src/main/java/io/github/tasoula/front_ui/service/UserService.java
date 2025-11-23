@@ -39,6 +39,7 @@ public class UserService implements ReactiveUserDetailsService {
             } else {
                 String password = passwordEncoder.encode(userRegistrationDto.getPassword());
                 UserRegistrationDto savedUser = new UserRegistrationDto(
+                        // todo в классе для UserDetails будет id пользователя
                         userRegistrationDto.getLogin(),
                         password,
                         password, //todo повтор пароля можно не хранить, нужен другой dto для одного зашифрованного пароля
@@ -51,6 +52,11 @@ public class UserService implements ReactiveUserDetailsService {
                 return savedUser;
             }
         });
+    }
+
+    public Mono<Void> deleteUser(UserRegistrationDto user) {
+        repository.remove(user.getLogin());
+        return Mono.empty();
     }
 }
 

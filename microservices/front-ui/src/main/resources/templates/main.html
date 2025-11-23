@@ -34,7 +34,7 @@
                         </p>
                     </td>
                     <td style="text-align:right">
-                        <button>Изменить пароль</button>
+                        <button type="submit">Изменить пароль</button>
                     </td>
                 </tr>
             </table>
@@ -66,6 +66,17 @@
                 <tr>
                     <td style="text-align:right" colspan="3">
                         <button>Сохранить изменения</button>
+                    </td>
+                </tr>
+            </table>
+        </form>
+    </td></tr>
+    <tr><td style="padding:5px;">
+        <form method="post" th:action="${'/delete'}">
+            <table class="section-table">
+                <tr>
+                    <td colspan="3" style="text-align:right; padding-top: 20px;">
+                        <button onclick="return confirm('Вы уверены, что хотите удалить аккаунт? Это действие необратимо.');">Удалить аккаунт</button>
                     </td>
                 </tr>
             </table>

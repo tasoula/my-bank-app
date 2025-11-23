@@ -1,6 +1,7 @@
 package io.github.tasoula.front_ui.controller;
 
 import io.github.tasoula.front_ui.dto.UserRegistrationDto;
+import io.github.tasoula.front_ui.exceptions.NonZeroAccountsException;
 import io.github.tasoula.front_ui.exceptions.UserAlreadyExistsException;
 import io.github.tasoula.front_ui.service.UserService;
 import jakarta.validation.Valid;
@@ -10,9 +11,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.ReactiveAuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.ReactiveSecurityContextHolder;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextImpl;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.server.context.ServerSecurityContextRepository;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -21,7 +23,6 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.server.ServerWebExchange;
 import org.springframework.web.server.WebSession;
 import reactor.core.publisher.Mono;
@@ -31,10 +32,9 @@ import java.time.LocalDate;
 import java.time.Period;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 @Controller
-public class SignupController {
+public class LoginController {
 
     private final UserService userService;
     private final ReactiveAuthenticationManager authenticationManager;
@@ -42,7 +42,7 @@ public class SignupController {
     @Autowired
     private ServerSecurityContextRepository securityContextRepository;
 
-    public SignupController(UserService userService, ReactiveAuthenticationManager authenticationManager) {
+    public LoginController(UserService userService, ReactiveAuthenticationManager authenticationManager) {
         this.userService = userService;
         this.authenticationManager = authenticationManager;
     }
@@ -91,9 +91,35 @@ public class SignupController {
                 });
     }
 
+    @PostMapping("/delete")
+    public Mono<String> delete(@AuthenticationPrincipal Mono<UserDetails> userDetailsMono) {
+
+        // пытаемся удалить пользователя
+        // если есть ненулевые счета, то выводим сообщение о том, что для нельзя удалить пользователя, у которого есть ненулевые счета
+        // если удалить не удалось, то добавляем в модель сообщение исключения, выброшенного методом userService::deleteUser
+        // если удаление прошло успешно, то аннулируем сессию и переходим на /login?deleted
+
+        return userDetailsMono
+                .cast(UserRegistrationDto.class)
+                .flatMap(userDto -> userService.deleteUser(userDto)
+                        .then(Mono.just("redirect:/logout?deleted"))
+                        .onErrorResume(NonZeroAccountsException.class, ex -> {
+                            System.err.println("User deletion failed due to non-zero accounts: " + ex.getMessage());
+                            return Mono.just("Для нельзя удалить пользователя, у которого есть ненулевые счета");
+                        })
+                        // Обработка любых других исключений, выброшенных userService::deleteUser
+                        .onErrorResume(Exception.class, ex -> {
+                            System.err.println("User deletion failed with unexpected error: " + ex.getMessage());
+                            return Mono.just(ex.getMessage()); // Возвращаем сообщение исключения
+                        })
+                )
+                // Если userDetailsMono пуст (например, пользователь не авторизован или сессия истекла)
+                .switchIfEmpty(Mono.just("Пользователь не найден или не авторизован для удаления."));
+    }
+
     @GetMapping("/login")
-    public Mono<String> login(WebSession session
-            , ServerWebExchange exchange,
+    public Mono<String> login(WebSession session,
+             ServerWebExchange exchange,
                               Model model) {
 
         MultiValueMap<String, String> queryParams = exchange.getRequest().getQueryParams();
@@ -106,25 +132,27 @@ public class SignupController {
         if (queryParams.containsKey("logout")) {
             model.addAttribute("logout", "logout");
         }
+        if (queryParams.containsKey("deleted")) {
+            model.addAttribute("deleted", "deleted");
+        }
 
         return session.changeSessionId()
                 .thenReturn("login.html");
     }
 
-
     @GetMapping("/logout")
-    public Mono<ResponseEntity<Void>> logout(WebSession session) {
+    public Mono<ResponseEntity<Void>> logout(WebSession session, ServerWebExchange exchange) {
+        MultiValueMap<String, String> queryParams = exchange.getRequest().getQueryParams();
+        String uri = (queryParams.containsKey("deleted")) ? "/login?deleted" : "/login?logout";
+
         return session.invalidate()
                 .thenReturn(
                         ResponseEntity.status(HttpStatus.FOUND)
-                                .location(URI.create("/login?logout"))
+                                .location(URI.create(uri))
                                 .build()
                 );
     }
 
-
-
-    // Отдельный метод для валидации, возвращающий Mono<Boolean>
     private Mono<Boolean> validateUserRegistration(UserRegistrationDto userRegistrationDto, BindingResult bindingResult) {
         // Проверка паролей
         if (!userRegistrationDto.getPassword().equals(userRegistrationDto.getConfirm_password())) {
