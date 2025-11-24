@@ -59,36 +59,31 @@ public class LoginController {
                                BindingResult bindingResult,
                                Model model,
                                ServerWebExchange exchange) {
+        if (bindingResult.hasErrors()) {
+            List<String> errors = new ArrayList<>();
+            bindingResult.getAllErrors().forEach(error -> errors.add(error.getDefaultMessage()));
+            model.addAttribute("errors", errors);
+            return Mono.just("signup"); // Возвращаем страницу с ошибками
+        }
 
-        // Логика валидации, которая может быть вынесена в отдельный Mono
-        return validateUserRegistration(userRegistrationDto, bindingResult)
-                .flatMap(isValid -> {
-                    if (!isValid) {
-                        List<String> errors = new ArrayList<>();
-                        bindingResult.getAllErrors().forEach(error -> errors.add(error.getDefaultMessage()));
-                        model.addAttribute("errors", errors);
-                        return Mono.just("signup"); // Возвращаем страницу с ошибками
-                    }
-
-                    // Логика регистрации и аутентификации
-                    return userService.createUser(userRegistrationDto)
-                            .flatMap(userDetails -> {
-                                Authentication authentication = new UsernamePasswordAuthenticationToken(
-                                        userRegistrationDto.getLogin(),
-                                        userRegistrationDto.getPassword()
-                                );
-                                return authenticationManager.authenticate(authentication) // Аутентифицируем пользователя
-                                        .flatMap(auth -> {
-                                            // Сохраняем аутентификацию в SecurityContext
-                                            SecurityContext securityContext = new SecurityContextImpl(auth);
-                                            return securityContextRepository.save(exchange, securityContext)
-                                                    .then(Mono.just("redirect:/main"));
-                                        });
-                            })
-                            .onErrorResume(UserAlreadyExistsException.class, ex -> {
-                                model.addAttribute("errors", List.of(ex.getMessage()));
-                                return Mono.just("signup"); // Возвращаем страницу с ошибками
+        // Логика регистрации и аутентификации
+        return userService.createUser(userRegistrationDto)
+                .flatMap(userDetails -> {
+                    Authentication authentication = new UsernamePasswordAuthenticationToken(
+                            userRegistrationDto.getLogin(),
+                            userRegistrationDto.getPassword()
+                    );
+                    return authenticationManager.authenticate(authentication) // Аутентифицируем пользователя
+                            .flatMap(auth -> {
+                                // Сохраняем аутентификацию в SecurityContext
+                                SecurityContext securityContext = new SecurityContextImpl(auth);
+                                return securityContextRepository.save(exchange, securityContext)
+                                        .then(Mono.just("redirect:/main"));
                             });
+                })
+                .onErrorResume(UserAlreadyExistsException.class, ex -> {
+                    model.addAttribute("errors", List.of(ex.getMessage()));
+                    return Mono.just("signup"); // Возвращаем страницу с ошибками
                 });
     }
 
@@ -156,9 +151,9 @@ public class LoginController {
 
     private Mono<Boolean> validateUserRegistration(UserRegistrationDto userRegistrationDto, BindingResult bindingResult) {
         // Проверка паролей
-        if (!userRegistrationDto.getPassword().equals(userRegistrationDto.getConfirm_password())) {
-            bindingResult.rejectValue("confirm_password", "error.userRegistrationDto", "Пароли не совпадают");
-        }
+     //   if (!userRegistrationDto.getPassword().equals(userRegistrationDto.getConfirm_password())) {
+     //       bindingResult.rejectValue("confirm_password", "error.userRegistrationDto", "Пароли не совпадают");
+     //   }
 
         // Проверка возраста
         if (userRegistrationDto.getBirthdate() != null) {

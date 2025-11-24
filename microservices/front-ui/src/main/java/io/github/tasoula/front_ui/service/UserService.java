@@ -21,7 +21,7 @@ public class UserService implements ReactiveUserDetailsService {
 
     private final PasswordEncoder passwordEncoder;
 
-    private final Map<String, User> repository = new HashMap<>();
+    private final Map<String, User> repository = new HashMap<>(); // заменить на Map<UUID, User>
 
     public UserService(PasswordEncoder passwordEncoder) {
         this.passwordEncoder = passwordEncoder;
@@ -42,7 +42,6 @@ public class UserService implements ReactiveUserDetailsService {
                 String password = passwordEncoder.encode(userRegistrationDto.getPassword());
                 User savedUser = new User(
                         UUID.randomUUID(),
-                        // todo в классе для UserDetails будет id пользователя
                         userRegistrationDto.getLogin(),
                         password,
                         userRegistrationDto.getName(), // фамилия и имя пользователя
@@ -59,6 +58,20 @@ public class UserService implements ReactiveUserDetailsService {
     public Mono<Void> deleteUser(User user) {
         repository.remove(user.getLogin());
         return Mono.empty();
+    }
+
+    public Mono<User> updatePassword(User user, String newPassword) {
+        User updated = new User(
+                user.getId(),
+                user.getLogin(),
+                passwordEncoder.encode(newPassword),
+                user.getName(),
+                user.getEmail(),
+                user.getBirthdate()
+        );
+
+        repository.put(user.getLogin(), updated);
+        return Mono.just(updated);
     }
 }
 

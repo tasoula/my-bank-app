@@ -1,5 +1,7 @@
 package io.github.tasoula.front_ui.dto;
 
+import io.github.tasoula.front_ui.validation.Adult;
+import io.github.tasoula.front_ui.validation.PasswordMatches;
 import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -13,16 +15,11 @@ import java.util.Collections;
 
 @Data
 @AllArgsConstructor
-public class UserRegistrationDto {
+@PasswordMatches
+public class UserRegistrationDto extends PasswordChangeDto{
     @NotBlank(message = "Логин не может быть пустым")
     @Size(min = 3, max = 20, message = "Логин должен быть от 3 до 20 символов")
     String login;
-
-    @NotBlank(message = "Пароль не может быть пустым")
-    @Size(min = 8, message = "Пароль должен содержать минимум 8 символов")
-    String password;
-
-    String confirm_password;
 
     @NotBlank(message = "Фамилия и имя не могут быть пустыми")
     @Size(min = 2, message = "Фамилия и имя должны содержать минимум 2 символа")
@@ -33,6 +30,6 @@ public class UserRegistrationDto {
     String email;
 
     @NotNull(message = "Дата рождения не может быть пустой")
-    @Past(message = "Дата рождения должна быть в прошлом")
+    @Adult(message = "Вам должно быть не менее 18 лет")
     LocalDate birthdate;
 }

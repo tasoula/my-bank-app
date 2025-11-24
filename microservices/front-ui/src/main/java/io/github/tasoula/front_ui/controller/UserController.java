@@ -1,23 +1,39 @@
 package io.github.tasoula.front_ui.controller;
 
+import io.github.tasoula.front_ui.dto.PasswordChangeDto;
 import io.github.tasoula.front_ui.dto.UserRegistrationDto;
+import io.github.tasoula.front_ui.exceptions.UserAlreadyExistsException;
 import io.github.tasoula.front_ui.model.User;
+import io.github.tasoula.front_ui.service.UserService;
+import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextImpl;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 
 @Controller
 public class UserController {
+
+    private final UserService userService;
+
+    public UserController(UserService userService) {
+        this.userService = userService;
+    }
 
     @GetMapping("/")
     public Mono<String> redirectToMain() {
@@ -45,27 +61,44 @@ public class UserController {
                 });
     }
 
-    /*
     @PostMapping("/user/{login}/editPassword")
     public Mono<String> editPassword(
-            @PathVariable String login,
-            @RequestParam String password,
-            @RequestParam String confirm_password,
+            @AuthenticationPrincipal Mono<UserDetails> userDetailsMono,
+            @Valid @PathVariable String login,
+            @Valid @ModelAttribute PasswordChangeDto passwordChangeDto,
+            BindingResult bindingResult,
             Model model) {
 
-        // Здесь должна быть логика валидации и смены пароля
-        List<String> errors = validatePassword(password, confirm_password);
+        if (bindingResult.hasErrors()) {
+            List<String> errors = new ArrayList<>();
+            bindingResult.getAllErrors().forEach(error -> errors.add(error.getDefaultMessage()));
+            model.addAttribute("passwordErrors", errors);
+            return Mono.just("/main"); // Возвращаем страницу с ошибками
+        }
 
-        if (errors.isEmpty()) {
+       return userDetailsMono.cast(User.class)
+               .flatMap(user-> userService.updatePassword(user, passwordChangeDto.getPassword()))
+               .then(Mono.just("redirect:/main"))
+               .onErrorResume(RuntimeException.class, ex -> {
+                   model.addAttribute("passwordErrors", List.of(ex.getMessage()));
+                   return Mono.just("signup"); // Возвращаем страницу с ошибками
+               });
+
+
+
+        /*   if (errors.isEmpty()) {
+
             // Успешная смена пароля
             return Mono.just("redirect:/main");
         } else {
             // Возвращаем на главную с ошибками
-            return prepareMainPageWithErrors(model, "passwordErrors", errors);
+            return prepareMainPageWithErrors(userDetailsMono, model, "passwordErrors", errors);
         }
+
+         */
     }
 
-    @PostMapping("/user/{login}/editUserAccount")
+  /*  @PostMapping("/user/{login}/editUserAccount")
     public Mono<String> editUserAccount(
             @PathVariable String login,
             @RequestParam String name,
@@ -118,7 +151,7 @@ public class UserController {
             return prepareMainPageWithErrors(model, "transferOtherErrors", errors);
         }
     }
-
+*/
     // Вспомогательные методы для валидации (заглушки)
     private List<String> validatePassword(String password, String confirmPassword) {
         // Реализуйте логику валидации пароля
@@ -140,15 +173,15 @@ public class UserController {
         return List.of();
     }
 
-    private Mono<String> prepareMainPageWithErrors(Model model, String errorAttribute, List<String> errors) {
+       private Mono<String> prepareMainPageWithErrors(Mono<UserDetails> userDetailsMono, Model model, String errorAttribute, List<String> errors) {
         // Здесь должна быть логика подготовки главной страницы с ошибками
         // Это упрощенная реализация - в реальном приложении нужно сохранять состояние
-        return mainPage(model).doOnSuccess(ignore -> {
+        return mainPage(userDetailsMono, model).doOnSuccess(ignore -> {
             model.addAttribute(errorAttribute, errors);
         });
     }
 
-       @PostMapping("/user/{login}/exchange")
+ /*      @PostMapping("/user/{login}/exchange")
    public String performExchange(@PathVariable String login,
                                  @RequestParam(value = "amountSell", required = false) Double amountSell,
                                  @RequestParam(value = "amountBuy", required = false) Double amountBuy,
