@@ -138,7 +138,7 @@
 
     <!-- ОБНОВЛЕННЫЙ БЛОК: Операции с наличными (с выбором счета) -->
     <tr><td style="padding:5px;">
-        <form method="post" th:action="${'/user/'+login+'/cash'}">
+        <form method="post" th:action="${'/user/cash'}">
             <table class="section-table">
                 <tr>
                     <td colspan="4" class="section-header">Наличные операции</td>
@@ -149,21 +149,21 @@
                 <tr>
                     <td style="font-weight:bold; width: 15%;">Счет</td>
                     <td colspan="3">
-                        <select name="account_id" style="width:auto; min-width: 200px;" required>
+                        <select name="accountId" style="width:auto; min-width: 200px;" required>
                             <option value="">Выберите счет</option>
                             <option th:each="account : ${currentUserAccounts}" th:value="${account.id}"
-                                    th:text="${account.currency + ' (Баланс: ' + #numbers.formatDecimal(account.balance, 0, 'COMMA', 2, 'POINT') + ')'}"/>
+                                    th:text="${account.currency + ' (Баланс: ' + #numbers.formatDecimal(account.balance, 0, 'COMMA', 2, 'POINT') + ')'}"></option>
                         </select>
                     </td>
                 </tr>
                 <tr>
                     <td style="font-weight:bold;">Сумма</td>
                     <td>
-                        <input name="value" type="number" step="0.01" min="0.01" style="width:100%" required placeholder="Введите сумму"/>
+                        <input name="amount" type="number" step="0.01" min="0.01" style="width:100%" required placeholder="Введите сумму"/>
                     </td>
                     <td style="text-align:right" colspan="2">
-                        <button name="action" value="PUT">Положить</button>
-                        <button name="action" value="GET">Снять</button>
+                        <button name="action" value="DEPOSIT">Положить</button>
+                        <button name="action" value="WITHDRAW">Снять</button>
                     </td>
                 </tr>
             </table>
@@ -172,7 +172,7 @@
 
     <!-- НОВЫЙ БЛОК: Перевод между своими счетами -->
     <tr><td style="padding:5px;">
-        <form method="post" th:action="${'/user/'+login+'/transfer/own'}">
+        <form method="post" th:action="${'/user/transfer/own'}">
             <table class="section-table">
                 <tr>
                     <td colspan="3" class="section-header">Перевод между своими счетами</td>
@@ -203,7 +203,7 @@
                 <tr>
                     <td style="font-weight:bold;">Сумма</td>
                     <td>
-                        <input name="value" type="number" step="0.01" min="0.01" required placeholder="Введите сумму"/>
+                        <input name="amount" type="number" step="0.01" min="0.01" required placeholder="Введите сумму"/>
                     </td>
                     <td style="text-align:right">
                         <button>Перевести</button>

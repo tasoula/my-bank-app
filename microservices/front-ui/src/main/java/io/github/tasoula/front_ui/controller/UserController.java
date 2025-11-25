@@ -1,8 +1,10 @@
 package io.github.tasoula.front_ui.controller;
 
 
+import io.github.tasoula.front_ui.dto.CashOperationDto;
+import io.github.tasoula.front_ui.dto.TransferDto;
 import io.github.tasoula.front_ui.dto.UserDto;
-import io.github.tasoula.front_ui.model.Account;
+import io.github.tasoula.front_ui.enums.OperationEnum;
 import io.github.tasoula.front_ui.model.User;
 import io.github.tasoula.front_ui.service.AccountService;
 import io.github.tasoula.front_ui.service.UserService;
@@ -126,8 +128,26 @@ public class UserController {
         return Mono.just("redirect:/main");
     }
 
+    @PostMapping("/user/cash")
+    public Mono<String> cashOperation(
+            @ModelAttribute CashOperationDto dto,
+            Model model) {
+        BigDecimal amount = dto.getAmount();
+        if(dto.getAction() == OperationEnum.WITHDRAW){
+            amount = amount.multiply(BigDecimal.valueOf(-1));
+        }
+        accountService.cashTransaction(dto.getAccountId(), amount);
+        return Mono.just("redirect:/main");
+    }
 
-
+    @PostMapping("/user/transfer/own")
+    public Mono<String> transfer(
+            @ModelAttribute TransferDto dto,
+            Model model) {
+        BigDecimal amount = dto.getAmount();
+        accountService.transferTransaction(dto.getFrom_account_id(), dto.getTo_account_id(), amount);
+        return Mono.just("redirect:/main");
+    }
 
     /*   @PostMapping("/user/{login}/cash")
     public Mono<String> cashOperation(
