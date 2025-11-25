@@ -2,7 +2,9 @@ package io.github.tasoula.front_ui.controller;
 
 
 import io.github.tasoula.front_ui.dto.UserDto;
+import io.github.tasoula.front_ui.model.Account;
 import io.github.tasoula.front_ui.model.User;
+import io.github.tasoula.front_ui.service.AccountService;
 import io.github.tasoula.front_ui.service.UserService;
 import io.github.tasoula.front_ui.validation.groups.PasswordChangeGroup;
 import io.github.tasoula.front_ui.validation.groups.UpdateGroup;
@@ -18,17 +20,21 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @Controller
 public class UserController {
 
     private final UserService userService;
+    private final AccountService accountService;
 
-    public UserController(UserService userService) {
+    public UserController(UserService userService, AccountService accountService) {
         this.userService = userService;
+        this.accountService = accountService;
     }
 
     @GetMapping("/")
@@ -56,6 +62,8 @@ public class UserController {
                                         new UserInfo("user1", "Петров Петр"),
                                         new UserInfo("user2", "Сидорова Анна")));
                                 // todo так же в модель надо передать список доступных валют с курсами
+                                model.addAttribute("availableCurrencies", accountService.getCurrencies());
+                                model.addAttribute("currentUserAccounts", accountService.getUserAccounts(user.getId()));
                                 return Mono.just("main");
                             });
                 });
@@ -84,8 +92,8 @@ public class UserController {
                 });
     }
 
-    @PostMapping("/user/editUserAccount")
-    public Mono<String> editUserAccount(
+    @PostMapping("/user/editUser")
+    public Mono<String> editUser(
             @AuthenticationPrincipal Mono<UserDetails> userDetailsMono,
             @Validated(UpdateGroup.class) @ModelAttribute UserDto dto,
             BindingResult bindingResult,
@@ -106,7 +114,22 @@ public class UserController {
                 });
     }
 
- /*   @PostMapping("/user/{login}/cash")
+    @PostMapping("/user/accounts/open")
+    public Mono<String> createAccount(@AuthenticationPrincipal Mono<UserDetails> userDetailsMono){
+        accountService.createAccount();
+        return Mono.just("redirect:/main");
+    }
+
+    @PostMapping("/user/accounts/{accountId}/close")
+    public Mono<String> deleteAccount(@PathVariable UUID accountId){
+        accountService.deleteAccount(accountId);
+        return Mono.just("redirect:/main");
+    }
+
+
+
+
+    /*   @PostMapping("/user/{login}/cash")
     public Mono<String> cashOperation(
             @PathVariable String login,
             @RequestParam Double value,
