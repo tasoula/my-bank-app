@@ -1,24 +1,20 @@
 package io.github.tasoula.front_ui.controller;
 
-import io.github.tasoula.front_ui.dto.PasswordChangeDto;
-import io.github.tasoula.front_ui.dto.UserRegistrationDto;
-import io.github.tasoula.front_ui.exceptions.UserAlreadyExistsException;
+
+import io.github.tasoula.front_ui.dto.UserDto;
 import io.github.tasoula.front_ui.model.User;
 import io.github.tasoula.front_ui.service.UserService;
-import jakarta.validation.Valid;
+import io.github.tasoula.front_ui.validation.groups.PasswordChangeGroup;
+import io.github.tasoula.front_ui.validation.groups.UpdateGroup;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
-import org.springframework.format.annotation.DateTimeFormat;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.context.SecurityContext;
-import org.springframework.security.core.context.SecurityContextImpl;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
 
@@ -43,29 +39,32 @@ public class UserController {
     @GetMapping("/main")
     public Mono<String> mainPage(@AuthenticationPrincipal Mono<UserDetails> userDetailsMono, Model model) {
 
-        return userDetailsMono.cast(User.class)
-                .flatMap(user->{
-                    // todo Передаем в модель пользователя со списком его счетов
-                    model.addAttribute("login", user.getLogin());
-                    model.addAttribute("name", user.getName());
-                    model.addAttribute("birthdate", user.getBirthdate());
-                    model.addAttribute("users", List.of(
-                            // Здесь должна быть логика получения данных других пользователей
-                            // Отображать только тех, у кого есть счета в заданной валюте?
-                            // Или отображать всех, но если счета в нужной валюте нет, то выдать ошибку?
-                            // Наверное 2е, т.к. пользователю в этом случае будет понятнее, что делать
-                            new UserInfo("user1", "Петров Петр"),
-                            new UserInfo("user2", "Сидорова Анна")));
-                    // todo так же в модель надо передать список доступных валют с курсами
-                    return Mono.just("main");
+        return userDetailsMono
+                .flatMap(userDetails->{
+                    return userService.findByUsername(userDetails.getUsername())
+                            .cast(User.class)
+                            .flatMap(user-> {// todo Передаем в модель пользователя со списком его счетов
+                                model.addAttribute("login", user.getLogin());
+                                model.addAttribute("name", user.getName());
+                                model.addAttribute("email", user.getEmail());
+                                model.addAttribute("birthdate", user.getBirthdate());
+                                model.addAttribute("users", List.of(
+                                        // Здесь должна быть логика получения данных других пользователей
+                                        // Отображать только тех, у кого есть счета в заданной валюте?
+                                        // Или отображать всех, но если счета в нужной валюте нет, то выдать ошибку?
+                                        // Наверное 2е, т.к. пользователю в этом случае будет понятнее, что делать
+                                        new UserInfo("user1", "Петров Петр"),
+                                        new UserInfo("user2", "Сидорова Анна")));
+                                // todo так же в модель надо передать список доступных валют с курсами
+                                return Mono.just("main");
+                            });
                 });
     }
 
-    @PostMapping("/user/{login}/editPassword")
+    @PostMapping("/user/editPassword")
     public Mono<String> editPassword(
             @AuthenticationPrincipal Mono<UserDetails> userDetailsMono,
-            @Valid @PathVariable String login,
-            @Valid @ModelAttribute PasswordChangeDto passwordChangeDto,
+            @Validated(PasswordChangeGroup.class) @ModelAttribute UserDto updDto,
             BindingResult bindingResult,
             Model model) {
 
@@ -76,47 +75,38 @@ public class UserController {
             return Mono.just("/main"); // Возвращаем страницу с ошибками
         }
 
-       return userDetailsMono.cast(User.class)
-               .flatMap(user-> userService.updatePassword(user, passwordChangeDto.getPassword()))
-               .then(Mono.just("redirect:/main"))
-               .onErrorResume(RuntimeException.class, ex -> {
-                   model.addAttribute("passwordErrors", List.of(ex.getMessage()));
-                   return Mono.just("signup"); // Возвращаем страницу с ошибками
-               });
-
-
-
-        /*   if (errors.isEmpty()) {
-
-            // Успешная смена пароля
-            return Mono.just("redirect:/main");
-        } else {
-            // Возвращаем на главную с ошибками
-            return prepareMainPageWithErrors(userDetailsMono, model, "passwordErrors", errors);
-        }
-
-         */
+        return userDetailsMono.cast(User.class)
+                .flatMap(user -> userService.updateUser(user, updDto))
+                .then(Mono.just("redirect:/main"))//todo хорошо бы добавитьнадпись, что пвароль изменен
+                .onErrorResume(RuntimeException.class, ex -> {
+                    model.addAttribute("passwordErrors", List.of(ex.getMessage()));
+                    return Mono.just("/main"); // Возвращаем страницу с ошибками
+                });
     }
 
-  /*  @PostMapping("/user/{login}/editUserAccount")
+    @PostMapping("/user/editUserAccount")
     public Mono<String> editUserAccount(
-            @PathVariable String login,
-            @RequestParam String name,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate birthdate,
+            @AuthenticationPrincipal Mono<UserDetails> userDetailsMono,
+            @Validated(UpdateGroup.class) @ModelAttribute UserDto dto,
+            BindingResult bindingResult,
             Model model) {
-
-        // Здесь должна быть логика валидации и обновления данных
-        List<String> errors = validateUserAccount(name, birthdate);
-
-        if (errors.isEmpty()) {
-            // Успешное обновление данных
-            return Mono.just("redirect:/main");
-        } else {
-            return prepareMainPageWithErrors(model, "userAccountErrors", errors);
+        // todo общая логика с изменением пароля
+        if (bindingResult.hasErrors()) {
+            List<String> errors = new ArrayList<>();
+            bindingResult.getAllErrors().forEach(error -> errors.add(error.getDefaultMessage()));
+            model.addAttribute("userAccountErrors", errors);
+            return Mono.just("/main"); // Возвращаем страницу с ошибками
         }
+        return userDetailsMono.cast(User.class)
+                .flatMap(user-> userService.updateUser(user, dto))
+                .then(Mono.just("redirect:/main"))
+                .onErrorResume(RuntimeException.class, ex -> {
+                    model.addAttribute("userAccountErrors", List.of(ex.getMessage()));
+                    return Mono.just("/main"); // Возвращаем страницу с ошибками
+                });
     }
 
-    @PostMapping("/user/{login}/cash")
+ /*   @PostMapping("/user/{login}/cash")
     public Mono<String> cashOperation(
             @PathVariable String login,
             @RequestParam Double value,

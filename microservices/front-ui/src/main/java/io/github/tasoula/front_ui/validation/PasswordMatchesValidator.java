@@ -1,6 +1,7 @@
 package io.github.tasoula.front_ui.validation;
 
-import io.github.tasoula.front_ui.dto.PasswordChangeDto;
+
+import io.github.tasoula.front_ui.dto.UserDto;
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
 
@@ -12,7 +13,7 @@ public class PasswordMatchesValidator implements ConstraintValidator<PasswordMat
 
     @Override
     public boolean isValid(Object obj, ConstraintValidatorContext context) {
-        PasswordChangeDto user = (PasswordChangeDto) obj;
+        UserDto user = (UserDto) obj;
         return user.getPassword().equals(user.getConfirm_password());
     }
 }

@@ -1,17 +1,14 @@
 package io.github.tasoula.front_ui.service;
 
-import io.github.tasoula.front_ui.dto.UserRegistrationDto;
+import io.github.tasoula.front_ui.dto.UserDto;
 import io.github.tasoula.front_ui.exceptions.UserAlreadyExistsException;
 import io.github.tasoula.front_ui.model.User;
-import jakarta.validation.constraints.*;
 import org.springframework.security.core.userdetails.ReactiveUserDetailsService;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
-import java.awt.event.MouseMotionAdapter;
-import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -32,7 +29,7 @@ public class UserService implements ReactiveUserDetailsService {
         return repository.containsKey(username) ? Mono.just(repository.get(username)) : Mono.empty();
     }
 
-    public Mono<UserDetails> createUser(UserRegistrationDto userRegistrationDto) {
+    public Mono<UserDetails> createUser(UserDto userRegistrationDto) {
         // todo обращение в сервис Accounts
         // будем создавать по умолчанию рублевый счет
         return Mono.fromCallable(() -> {
@@ -60,17 +57,18 @@ public class UserService implements ReactiveUserDetailsService {
         return Mono.empty();
     }
 
-    public Mono<User> updatePassword(User user, String newPassword) {
+    public Mono<?> updateUser(User user, UserDto updDto) {
         User updated = new User(
                 user.getId(),
-                user.getLogin(),
-                passwordEncoder.encode(newPassword),
-                user.getName(),
-                user.getEmail(),
-                user.getBirthdate()
+                (updDto.getLogin() == null || updDto.getLogin().isEmpty()) ? user.getLogin() : updDto.getLogin(),
+                (updDto.getPassword() == null || updDto.getPassword().isEmpty()) ? user.getPassword() : passwordEncoder.encode(updDto.getPassword()),
+                (updDto.getName() == null || updDto.getName().isEmpty()) ? user.getName() : updDto.getName(),
+                (updDto.getEmail() == null || updDto.getEmail().isEmpty()) ? user.getEmail() : updDto.getEmail(),
+                (updDto.getBirthdate() == null) ? user.getBirthdate() : updDto.getBirthdate()
         );
 
-        repository.put(user.getLogin(), updated);
+        repository.remove(user.getLogin());
+        repository.put(updated.getLogin(), updated);
         return Mono.just(updated);
     }
 }

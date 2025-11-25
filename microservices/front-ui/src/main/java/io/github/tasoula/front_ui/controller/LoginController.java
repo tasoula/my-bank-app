@@ -1,11 +1,11 @@
 package io.github.tasoula.front_ui.controller;
 
-import io.github.tasoula.front_ui.dto.UserRegistrationDto;
+import io.github.tasoula.front_ui.dto.UserDto;
 import io.github.tasoula.front_ui.exceptions.NonZeroAccountsException;
 import io.github.tasoula.front_ui.exceptions.UserAlreadyExistsException;
 import io.github.tasoula.front_ui.model.User;
 import io.github.tasoula.front_ui.service.UserService;
-import jakarta.validation.Valid;
+import io.github.tasoula.front_ui.validation.groups.RegistrationGroup;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -21,6 +21,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.util.MultiValueMap;
 import org.springframework.validation.BindingResult;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -55,7 +56,7 @@ public class LoginController {
     }
 
     @PostMapping("/signup")
-    public Mono<String> signup(@Valid @ModelAttribute UserRegistrationDto userRegistrationDto,
+    public Mono<String> signup(@Validated(RegistrationGroup.class) @ModelAttribute UserDto userRegistrationDto,
                                BindingResult bindingResult,
                                Model model,
                                ServerWebExchange exchange) {
@@ -149,7 +150,7 @@ public class LoginController {
                 );
     }
 
-    private Mono<Boolean> validateUserRegistration(UserRegistrationDto userRegistrationDto, BindingResult bindingResult) {
+    private Mono<Boolean> validateUserRegistration(UserDto userRegistrationDto, BindingResult bindingResult) {
         // Проверка паролей
      //   if (!userRegistrationDto.getPassword().equals(userRegistrationDto.getConfirm_password())) {
      //       bindingResult.rejectValue("confirm_password", "error.userRegistrationDto", "Пароли не совпадают");
