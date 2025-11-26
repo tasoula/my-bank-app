@@ -9,7 +9,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
+import java.time.LocalDate;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -18,10 +20,20 @@ public class UserService implements ReactiveUserDetailsService {
 
     private final PasswordEncoder passwordEncoder;
 
-    private final Map<String, User> repository = new HashMap<>(); // заменить на Map<UUID, User>
+    private final Map<String, User> repository; // заменить на Map<UUID, User>
+    User other;
 
     public UserService(PasswordEncoder passwordEncoder) {
         this.passwordEncoder = passwordEncoder;
+
+        repository = new HashMap<>();
+        other = new User(UUID.randomUUID(),
+                "otherUser",
+                passwordEncoder.encode("qwertyui"),
+                "Иванов Иван Иванович",
+                "ivanov_other@mail.ru",
+                LocalDate.parse("2002-11-12"));
+        repository.put("otherUser", other);
     }
 
     @Override
@@ -70,6 +82,10 @@ public class UserService implements ReactiveUserDetailsService {
         repository.remove(user.getLogin());
         repository.put(updated.getLogin(), updated);
         return Mono.just(updated);
+    }
+
+    public List<User> getOthers(String login) {
+        return List.of(other);
     }
 }
 

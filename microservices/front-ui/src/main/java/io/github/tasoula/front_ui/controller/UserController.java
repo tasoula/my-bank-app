@@ -3,8 +3,10 @@ package io.github.tasoula.front_ui.controller;
 
 import io.github.tasoula.front_ui.dto.CashOperationDto;
 import io.github.tasoula.front_ui.dto.TransferDto;
+import io.github.tasoula.front_ui.dto.TransferOtherDto;
 import io.github.tasoula.front_ui.dto.UserDto;
 import io.github.tasoula.front_ui.enums.OperationEnum;
+import io.github.tasoula.front_ui.model.Account;
 import io.github.tasoula.front_ui.model.User;
 import io.github.tasoula.front_ui.service.AccountService;
 import io.github.tasoula.front_ui.service.UserService;
@@ -56,16 +58,14 @@ public class UserController {
                                 model.addAttribute("name", user.getName());
                                 model.addAttribute("email", user.getEmail());
                                 model.addAttribute("birthdate", user.getBirthdate());
-                                model.addAttribute("users", List.of(
-                                        // Здесь должна быть логика получения данных других пользователей
-                                        // Отображать только тех, у кого есть счета в заданной валюте?
-                                        // Или отображать всех, но если счета в нужной валюте нет, то выдать ошибку?
-                                        // Наверное 2е, т.к. пользователю в этом случае будет понятнее, что делать
-                                        new UserInfo("user1", "Петров Петр"),
-                                        new UserInfo("user2", "Сидорова Анна")));
+                                model.addAttribute("users", userService.getOthers(user.getLogin()));
                                 // todo так же в модель надо передать список доступных валют с курсами
                                 model.addAttribute("availableCurrencies", accountService.getCurrencies());
                                 model.addAttribute("currentUserAccounts", accountService.getUserAccounts(user.getId()));
+                               // model.addAttribute("users", userService.getUsers()) // если нам нужно выбирать пользователя из списка,
+                                // но всех пользователей банка выводить неправильно, т.к. их очень много
+                                // поэтому правиленее вводить самим, например его номер телефона или другой уникальный идентификатор
+                                // т.к. телефона у нас нет, то будем считать, что фамилия и имя уникально или добавить к фамилии и иени email
                                 return Mono.just("main");
                             });
                 });
@@ -144,9 +144,17 @@ public class UserController {
     public Mono<String> transfer(
             @ModelAttribute TransferDto dto,
             Model model) {
-        BigDecimal amount = dto.getAmount();
-        accountService.transferTransaction(dto.getFrom_account_id(), dto.getTo_account_id(), amount);
+        accountService.transferTransaction(dto.getFrom_account_id(), dto.getTo_account_id(), dto.getAmount());
         return Mono.just("redirect:/main");
+    }
+
+    @PostMapping("/user/transfer/other")
+    public Mono<String> transferOther(
+            @ModelAttribute TransferOtherDto dto,
+            Model model) {
+
+        return accountService.transferToOther(dto)
+                .then(Mono.just("redirect:/main"));
     }
 
     /*   @PostMapping("/user/{login}/cash")
