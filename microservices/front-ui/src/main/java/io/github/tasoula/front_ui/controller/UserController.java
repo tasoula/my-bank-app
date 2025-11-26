@@ -51,7 +51,9 @@ public class UserController {
 
         return userDetailsMono
                 .flatMap(userDetails->{
-                    return userService.findByUsername(userDetails.getUsername())
+                    return userService.findByUsername(userDetails.getUsername())//приходится каждый раз получать пользователя,
+                            // т.к. если мы обновили его данные  и не переполучили их, то на форме остануися старые данные
+                            // а может лучше менять данные в userDetails?
                             .cast(User.class)
                             .flatMap(user-> {// todo Передаем в модель пользователя со списком его счетов
                                 model.addAttribute("login", user.getLogin());
@@ -87,7 +89,7 @@ public class UserController {
 
         return userDetailsMono.cast(User.class)
                 .flatMap(user -> userService.updateUser(user, updDto))
-                .then(Mono.just("redirect:/main"))//todo хорошо бы добавитьнадпись, что пвароль изменен
+                .then(Mono.just("redirect:/main"))//todo хорошо бы добавить надпись, что пароль изменен
                 .onErrorResume(RuntimeException.class, ex -> {
                     model.addAttribute("passwordErrors", List.of(ex.getMessage()));
                     return Mono.just("/main"); // Возвращаем страницу с ошибками
