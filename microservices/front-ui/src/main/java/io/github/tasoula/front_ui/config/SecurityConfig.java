@@ -38,17 +38,19 @@ public class SecurityConfig {
                         exchanges -> {
                             exchanges
                                     .pathMatchers("/css/**", "/js/**").permitAll()
-                                    .pathMatchers("/signup", "/login").permitAll()
+                                   // .pathMatchers("/signup", "/login").permitAll()
                                     .anyExchange().authenticated();
                         }
                 )
-                // Форма логина для пользователей
-                           .formLogin(form -> form
-                                   .loginPage("/login")
-                                   .authenticationSuccessHandler(successHandler()))
-            //    .logout(logout -> logout
-            //            .logoutUrl("/logout")
-             //           .logoutSuccessHandler(logoutSuccessHandler())
+                // Активация OAuth 2.0 Login (Authorization Code Flow)
+                .oauth2Login(oauth2 -> oauth2
+                        // Spring Security предоставит стандартную страницу входа,
+                        // которая содержит ссылки на настроенные провайдеры (Keycloak)
+                        .authenticationSuccessHandler(successHandler())
+                )
+                // Настройка ручки логаута (автоматически чистит сессию)
+             //   .logout(logout -> logout
+              //          .logoutSuccessHandler(oidcLogoutSuccessHandler())
              //   )
              //   .anonymous(anonymous -> anonymous
             //            .principal("guestUser")
@@ -72,8 +74,6 @@ public class SecurityConfig {
         };
     }
 
-
-
   /*  @Bean
     public ServerLogoutSuccessHandler logoutSuccessHandler() {
         return (exchange, authentication) -> {
@@ -84,12 +84,20 @@ public class SecurityConfig {
         };
     }
 */
-    @Bean
+
+    // Обработчик выхода из системы (Logout handler)
+    // В реальном приложении нужно также отправлять запрос на завершение сессии в Keycloak (RP-initiated logout)
+ /*   private ServerLogoutSuccessHandler oidcLogoutSuccessHandler() {
+        // Это пример, требующий доработки для взаимодействия с OIDC провайдером
+        return new HttpStatusCollectingServerLogoutSuccessHandler(HttpStatus.SEE_OTHER);
+    }
+
+ /*    @Bean
     public ServerSecurityContextRepository securityContextRepository() {
         return new WebSessionServerSecurityContextRepository();
     }
 
-    @Bean
+   @Bean
     PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
@@ -102,6 +110,8 @@ public class SecurityConfig {
         authenticationManager.setPasswordEncoder(passwordEncoder);
         return authenticationManager;
     }
+
+  */
 
 
 }

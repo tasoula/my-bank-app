@@ -18,18 +18,18 @@ import java.util.UUID;
 @Service
 public class UserService implements ReactiveUserDetailsService {
 
-    private final PasswordEncoder passwordEncoder;
+ //   private final PasswordEncoder passwordEncoder;
 
     private final Map<String, User> repository; // заменить на Map<UUID, User>
     User other;
 
-    public UserService(PasswordEncoder passwordEncoder) {
-        this.passwordEncoder = passwordEncoder;
+    public UserService() {
+    //    this.passwordEncoder = passwordEncoder;
 
         repository = new HashMap<>();
         other = new User(UUID.randomUUID(),
                 "otherUser",
-                passwordEncoder.encode("qwertyui"),
+                "qwertyui",
                 "Иванов Иван Иванович",
                 "ivanov_other@mail.ru",
                 LocalDate.parse("2002-11-12"));
@@ -44,7 +44,7 @@ public class UserService implements ReactiveUserDetailsService {
     public Mono<UserDetails> createUser(UserDto userRegistrationDto) {
         // todo обращение в сервис Accounts
         // будем создавать по умолчанию рублевый счет
-        return Mono.fromCallable(() -> {
+     /*   return Mono.fromCallable(() -> {
             if (repository.containsKey(userRegistrationDto.getLogin())) {
                 throw new UserAlreadyExistsException("пользователь с таким логином уже зарегистрирован");
             } else {
@@ -62,6 +62,10 @@ public class UserService implements ReactiveUserDetailsService {
                 return savedUser;
             }
         });
+
+
+      */
+        return Mono.empty();
     }
 
     public Mono<Void> deleteUser(User user) {
@@ -73,7 +77,7 @@ public class UserService implements ReactiveUserDetailsService {
         User updated = new User(
                 user.getId(),
                 (updDto.getLogin() == null || updDto.getLogin().isEmpty()) ? user.getLogin() : updDto.getLogin(),
-                (updDto.getPassword() == null || updDto.getPassword().isEmpty()) ? user.getPassword() : passwordEncoder.encode(updDto.getPassword()),
+                (updDto.getPassword() == null || updDto.getPassword().isEmpty()) ? user.getPassword() : updDto.getPassword(),
                 (updDto.getName() == null || updDto.getName().isEmpty()) ? user.getName() : updDto.getName(),
                 (updDto.getEmail() == null || updDto.getEmail().isEmpty()) ? user.getEmail() : updDto.getEmail(),
                 (updDto.getBirthdate() == null) ? user.getBirthdate() : updDto.getBirthdate()

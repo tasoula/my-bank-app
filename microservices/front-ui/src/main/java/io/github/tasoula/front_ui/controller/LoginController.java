@@ -1,5 +1,5 @@
 package io.github.tasoula.front_ui.controller;
-
+/*
 import io.github.tasoula.front_ui.dto.UserDto;
 import io.github.tasoula.front_ui.exceptions.NonZeroAccountsException;
 import io.github.tasoula.front_ui.exceptions.UserAlreadyExistsException;
@@ -167,4 +167,6 @@ public class LoginController {
         return Mono.just(!bindingResult.hasErrors()); // Возвращаем результат валидации
     }
 }
+
+ */
 

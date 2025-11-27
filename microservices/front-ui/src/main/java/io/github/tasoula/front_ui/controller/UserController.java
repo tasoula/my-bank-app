@@ -73,6 +73,7 @@ public class UserController {
                 });
     }
 
+    /*
     @PostMapping("/user/editPassword")
     public Mono<String> editPassword(
             @AuthenticationPrincipal Mono<UserDetails> userDetailsMono,
@@ -196,7 +197,7 @@ public class UserController {
     }
 */
     // Вспомогательные методы для валидации (заглушки)
-    private List<String> validatePassword(String password, String confirmPassword) {
+ /*   private List<String> validatePassword(String password, String confirmPassword) {
         // Реализуйте логику валидации пароля
         return List.of();
     }
@@ -262,11 +263,13 @@ public class UserController {
        }
    }
 */
-    @AllArgsConstructor
+  /*  @AllArgsConstructor
     @Getter
     @Setter
     public static class UserInfo {
         private String login;
         private String name;
     }
+
+   */
 }
