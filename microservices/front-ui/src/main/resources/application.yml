@@ -1,0 +1,31 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: Front-UI Service
+
+  security:
+    oauth2:
+      client:
+        provider:
+          keycloak:
+            issuer-uri: http://${KEYCLOAK_ISSUER_HOST_AND_PORT:localhost/8082}/realms/master
+        registration:
+          front-ui: # ???????? ??????????? ???????
+            # ???????? ??????? OAuth2
+            provider: keycloak
+            authorizationGrantType: client_credentials
+            client-id: front-ui
+            client-secret: ${FRONT_UI_KEYCLOAK_CLIENT_SECRET}
+            clientAuthenticationMethod: client_secret_post # ?????? ???????? ???????
+
+
+
+  #logging:
+#    org.springframework.security: DEBUG
+
+
+balance:
+  service:
+    url:  http://${ACCOUNTS_SERVICE_HOST}:8081

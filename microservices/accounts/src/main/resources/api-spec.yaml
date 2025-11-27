@@ -1,0 +1,135 @@
+openapi: 3.0.3
+info:
+  title: User and Accounts API
+  description: API для управления пользователями и их счетами.
+  version: 1.0.0
+paths:
+  /user/{login}:
+    get:
+      summary: Поиск пользователя по логину
+      operationId: getUserByLogin
+      parameters:
+        - name: login
+          in: path
+          required: true
+          description: Логин пользователя (строка)
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Пользователь успешно найден
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '404':
+          description: Пользователь не найден
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /user/{login}/accounts:
+    get:
+      summary: Получение списка счетов пользователя
+      operationId: getUserAccounts
+      parameters:
+        - name: login
+          in: path
+          required: true
+          description: Логин пользователя (строка)
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Список счетов успешно получен
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Account'
+        '404':
+          description: Пользователь не найден
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Уникальный идентификатор пользователя (UUID)
+        login:
+          type: string
+          description: Логин пользователя
+        password:
+          type: string
+          description: Пароль пользователя
+        name:
+          type: string
+          description: Имя пользователя
+        email:
+          type: string
+          format: email
+          description: Адрес электронной почты
+        birthdate:
+          type: string
+          format: date
+          description: Дата рождения (LocalDate)
+      required:
+        - id
+        - login
+        - password
+        - name
+        - email
+        - birthdate
+
+    Account:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Уникальный идентификатор счета (UUID)
+        currency:
+          type: string
+          description: Валюта счета (например, "RUB", "USD")
+        balance:
+          type: number
+          format: double
+          description: Баланс счета (BigDecimal)
+      required:
+        - id
+        - currency
+        - balance
+
+    Error:
+      type: object
+      properties:
+        code:
+          type: integer
+          description: Код ошибки (например, 404, 500)
+        message:
+          type: string
+          description: Детальное сообщение об ошибке
+      required:
+        - code
+        - message
