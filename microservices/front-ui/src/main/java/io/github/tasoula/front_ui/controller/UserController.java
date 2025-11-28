@@ -17,6 +17,10 @@ import lombok.Getter;
 import lombok.Setter;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.oauth2.client.OAuth2AuthorizeRequest;
+import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
+import org.springframework.security.oauth2.client.ReactiveOAuth2AuthorizedClientManager;
+import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -33,10 +37,13 @@ import java.util.UUID;
 @Controller
 public class UserController {
 
+    private final ReactiveOAuth2AuthorizedClientManager manager;
+
     private final UserService userService;
     private final AccountService accountService;
 
-    public UserController(UserService userService, AccountService accountService) {
+    public UserController(ReactiveOAuth2AuthorizedClientManager manager, UserService userService, AccountService accountService) {
+        this.manager = manager;
         this.userService = userService;
         this.accountService = accountService;
     }
@@ -48,6 +55,13 @@ public class UserController {
 
     @GetMapping("/main")
     public Mono<String> mainPage(@AuthenticationPrincipal Mono<UserDetails> userDetailsMono, Model model) {
+
+        manager.authorize(OAuth2AuthorizeRequest
+                        .withClientRegistrationId("front-ui")
+                        .principal("ivanov")
+                        .build())
+                .map(OAuth2AuthorizedClient::getAccessToken)
+                .map(OAuth2AccessToken::getTokenValue).subscribe(token -> System.out.println("-----------JWT TOKEN: " + token));
 
         return userDetailsMono
                 .flatMap(userDetails->{
@@ -73,7 +87,7 @@ public class UserController {
                 });
     }
 
-    /*
+
     @PostMapping("/user/editPassword")
     public Mono<String> editPassword(
             @AuthenticationPrincipal Mono<UserDetails> userDetailsMono,
@@ -88,7 +102,7 @@ public class UserController {
             return Mono.just("/main"); // Возвращаем страницу с ошибками
         }
 
-        return userDetailsMono.cast(User.class)
+       return userDetailsMono.cast(User.class)
                 .flatMap(user -> userService.updateUser(user, updDto))
                 .then(Mono.just("redirect:/main"))//todo хорошо бы добавить надпись, что пароль изменен
                 .onErrorResume(RuntimeException.class, ex -> {
@@ -97,7 +111,7 @@ public class UserController {
                 });
     }
 
-    @PostMapping("/user/editUser")
+  /*   @PostMapping("/user/editUser")
     public Mono<String> editUser(
             @AuthenticationPrincipal Mono<UserDetails> userDetailsMono,
             @Validated(UpdateGroup.class) @ModelAttribute UserDto dto,

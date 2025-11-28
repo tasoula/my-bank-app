@@ -11,23 +11,19 @@ spring:
         provider:
           keycloak:
             issuer-uri: http://${KEYCLOAK_ISSUER_HOST_AND_PORT:localhost:8082}/realms/master
-           # authorization-uri: http://localhost:8080/realms/master/protocol/openid-connect/auth
-           # token-uri: http://localhost:8080/realms/master/protocol/openid-connect/token
-           # jwk-set-uri: http://localhost:8080/realms/master/protocol/openid-connect/certs
         registration:
           front-ui:
             provider: keycloak
             authorizationGrantType: authorization_code
             client-id: front-ui
-            client-secret:  ${FRONT_UI_KEYCLOAK_CLIENT_SECRET} # TjbrzZQs62IcObYCHPo8VAdKO4CQxXVR #
-            clientAuthenticationMethod: client_secret_post
+            client-secret:  ${FRONT_UI_KEYCLOAK_CLIENT_SECRET} #vbnIiLlecdM07flbEQTrP6JSthqrepAc
             redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
             scope: openid, profile, email
 
 
-  #logging:
-#    org.springframework.security: DEBUG
-
+logging:
+  level:
+    org.springframework.security: DEBUG
 
 balance:
   service:

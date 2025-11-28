@@ -135,7 +135,35 @@
       }
     ],
     "client": {
-      "front-ui": [],
+      "front-ui": [
+        {
+          "id": "79c428d6-4407-49af-8beb-d750dd090eaf",
+          "name": "Cash-access",
+          "description": "access to Cash microservice",
+          "composite": false,
+          "clientRole": true,
+          "containerId": "99faa51a-1286-4d15-8ce5-3dc2f38009af",
+          "attributes": {}
+        },
+        {
+          "id": "945126a6-18e1-408b-a865-229666556d5f",
+          "name": "Accounts-access",
+          "description": "access to Accounts microservice",
+          "composite": false,
+          "clientRole": true,
+          "containerId": "99faa51a-1286-4d15-8ce5-3dc2f38009af",
+          "attributes": {}
+        },
+        {
+          "id": "7186babe-a6b6-4f63-b3d7-c82f1780bd81",
+          "name": "Transfer-access",
+          "description": "access to Transfer microservice",
+          "composite": false,
+          "clientRole": true,
+          "containerId": "99faa51a-1286-4d15-8ce5-3dc2f38009af",
+          "attributes": {}
+        }
+      ],
       "security-admin-console": [],
       "admin-cli": [],
       "account-console": [],
@@ -419,7 +447,23 @@
       ]
     }
   },
-  "groups": [],
+  "groups": [
+    {
+      "id": "81505049-34e4-47e3-a96f-7277ef5f94b2",
+      "name": "front-ui-users",
+      "path": "/front-ui-users",
+      "subGroups": [],
+      "attributes": {},
+      "realmRoles": [],
+      "clientRoles": {
+        "front-ui": [
+          "Cash-access",
+          "Accounts-access",
+          "Transfer-access"
+        ]
+      }
+    }
+  ],
   "defaultRole": {
     "id": "a2d31ed5-4e55-46b8-874b-352536954336",
     "name": "default-roles-master",
@@ -472,24 +516,6 @@
   "webAuthnPolicyPasswordlessAvoidSameAuthenticatorRegister": false,
   "webAuthnPolicyPasswordlessAcceptableAaguids": [],
   "webAuthnPolicyPasswordlessExtraOrigins": [],
-  "users": [
-    {
-      "id": "62dfc2dc-498e-4d27-9e1e-15394ccadd11",
-      "username": "service-account-front-ui",
-      "emailVerified": false,
-      "createdTimestamp": 1764234940163,
-      "enabled": true,
-      "totp": false,
-      "serviceAccountClientId": "front-ui",
-      "disableableCredentialTypes": [],
-      "requiredActions": [],
-      "realmRoles": [
-        "default-roles-master"
-      ],
-      "notBefore": 0,
-      "groups": []
-    }
-  ],
   "scopeMappings": [
     {
       "clientScope": "offline_access",
@@ -715,19 +741,18 @@
       "secret": "**********",
       "redirectUris": [
         "http://localhost:8080/*",
-        "http://localhost:8080/login/oauth2/code/front-ui",
         "/*"
       ],
       "webOrigins": [
-        "/*"
+        "http://localhost:8080"
       ],
       "notBefore": 0,
       "bearerOnly": false,
       "consentRequired": false,
       "standardFlowEnabled": true,
       "implicitFlowEnabled": false,
-      "directAccessGrantsEnabled": true,
-      "serviceAccountsEnabled": true,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false,
       "publicClient": false,
       "frontchannelLogout": true,
       "protocol": "openid-connect",
@@ -747,7 +772,6 @@
       "nodeReRegistrationTimeout": -1,
       "defaultClientScopes": [
         "web-origins",
-        "service_account",
         "acr",
         "profile",
         "roles",
@@ -1516,6 +1540,24 @@
             "claim.name": "realm_access.roles",
             "jsonType.label": "String",
             "multivalued": "true"
+          }
+        },
+        {
+          "id": "b1824550-2b74-4472-8af6-1cdbf4745a19",
+          "name": "client roles for front-ui",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-client-role-mapper",
+          "consentRequired": false,
+          "config": {
+            "introspection.token.claim": "true",
+            "multivalued": "true",
+            "userinfo.token.claim": "true",
+            "id.token.claim": "true",
+            "lightweight.claim": "false",
+            "access.token.claim": "true",
+            "claim.name": "resource_access.<client-id>.roles",
+            "jsonType.label": "String",
+            "usermodel.clientRoleMapping.clientId": "front-ui"
           }
         }
       ]
@@ -2412,17 +2454,19 @@
   "firstBrokerLoginFlow": "first broker login",
   "attributes": {
     "cibaBackchannelTokenDeliveryMode": "poll",
-    "cibaExpiresIn": "120",
     "cibaAuthRequestedUserHint": "login_hint",
-    "oauth2DeviceCodeLifespan": "600",
     "oauth2DevicePollingInterval": "5",
     "clientOfflineSessionMaxLifespan": "0",
     "clientSessionIdleTimeout": "0",
-    "parRequestUriLifespan": "60",
-    "clientSessionMaxLifespan": "0",
     "clientOfflineSessionIdleTimeout": "0",
     "cibaInterval": "5",
-    "realmReusableOtpCode": "false"
+    "realmReusableOtpCode": "false",
+    "cibaExpiresIn": "120",
+    "oauth2DeviceCodeLifespan": "600",
+    "parRequestUriLifespan": "60",
+    "clientSessionMaxLifespan": "0",
+    "frontendUrl": "",
+    "acr.loa.map": "{}"
   },
   "keycloakVersion": "26.1.3",
   "userManagedAccessAllowed": false,
