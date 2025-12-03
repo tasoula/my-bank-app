@@ -20,7 +20,8 @@ public class OAuth2ClientConfiguration {
                 new AuthorizedClientServiceReactiveOAuth2AuthorizedClientManager(clientRegistrationRepository, authorizedClientService);
 
         manager.setAuthorizedClientProvider(ReactiveOAuth2AuthorizedClientProviderBuilder.builder()
-                .clientCredentials()
+                .authorizationCode()
+                //.clientCredentials()
                 .refreshToken()
                 .build()
         );

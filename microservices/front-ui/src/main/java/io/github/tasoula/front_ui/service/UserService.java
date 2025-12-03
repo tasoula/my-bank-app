@@ -1,13 +1,17 @@
 package io.github.tasoula.front_ui.service;
 
 import io.github.tasoula.front_ui.dto.UserDto;
-import io.github.tasoula.front_ui.exceptions.UserAlreadyExistsException;
 import io.github.tasoula.front_ui.model.User;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.ReactiveUserDetailsService;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
+import org.springframework.security.oauth2.client.ReactiveOAuth2AuthorizedClientManager;
+import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.stereotype.Service;
+import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
+import org.springframework.security.oauth2.client.web.reactive.function.client.ServerOAuth2AuthorizedClientExchangeFilterFunction;
 
 import java.time.LocalDate;
 import java.util.HashMap;
@@ -18,7 +22,8 @@ import java.util.UUID;
 @Service
 public class UserService implements ReactiveUserDetailsService {
 
- //   private final PasswordEncoder passwordEncoder;
+    @Autowired
+    private WebClient webClient;
 
     private final Map<String, User> repository; // заменить на Map<UUID, User>
     User other;
@@ -39,6 +44,31 @@ public class UserService implements ReactiveUserDetailsService {
     @Override
     public Mono<UserDetails> findByUsername(String username) {
         return repository.containsKey(username) ? Mono.just(repository.get(username)) : Mono.empty();
+    }
+
+    @Autowired
+    private ReactiveOAuth2AuthorizedClientManager manager;
+
+    public Mono<String> callAccountsService(OAuth2AuthorizedClient authorizedClient, OidcUser oidcUser) {
+    /*    return manager.authorize(OAuth2AuthorizeRequest
+                        .withClientRegistrationId("front-ui")
+                        .principal("ivanov")
+                        .build())
+                .map(OAuth2AuthorizedClient::getAccessToken)
+                .map(OAuth2AccessToken::getTokenValue)
+                .flatMap(accessToken -> webClient.get()
+                        .uri("http://localhost:8070/accounts/api")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken)
+                        .retrieve()
+                        .bodyToMono(String.class)
+                );
+*/
+
+
+        return webClient.get()
+                .uri("http://localhost:8070/accounts/api")
+                .retrieve()
+                .bodyToMono(String.class);
     }
 
     public Mono<UserDetails> createUser(UserDto userRegistrationDto) {
@@ -68,8 +98,7 @@ public class UserService implements ReactiveUserDetailsService {
         return Mono.empty();
     }
 
-    public Mono<Void> deleteUser(User user) {
-        repository.remove(user.getLogin());
+    public Mono<String> deleteUser(User user) {
         return Mono.empty();
     }
 

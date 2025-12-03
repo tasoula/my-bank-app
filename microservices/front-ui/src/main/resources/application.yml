@@ -1,5 +1,5 @@
 server:
-  port: 8080
+  port: ${FRONT_UI_PORT}
 
 spring:
   application:
@@ -16,15 +16,13 @@ spring:
             provider: keycloak
             authorizationGrantType: authorization_code
             client-id: front-ui
-            client-secret:  ${FRONT_UI_KEYCLOAK_CLIENT_SECRET} #vbnIiLlecdM07flbEQTrP6JSthqrepAc
+            client-secret:  ${FRONT_UI_KEYCLOAK_CLIENT_SECRET}
             redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
             scope: openid, profile, email
-
-
 logging:
   level:
     org.springframework.security: DEBUG
 
-balance:
+accounts:
   service:
-    url:  http://${ACCOUNTS_SERVICE_HOST}:8081
+    url:  http://localhost:${ACCOUNTS_PORT}

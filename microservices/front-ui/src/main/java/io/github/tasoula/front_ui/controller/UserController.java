@@ -20,7 +20,9 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.oauth2.client.OAuth2AuthorizeRequest;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
 import org.springframework.security.oauth2.client.ReactiveOAuth2AuthorizedClientManager;
+import org.springframework.security.oauth2.client.annotation.RegisteredOAuth2AuthorizedClient;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
+import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -37,13 +39,10 @@ import java.util.UUID;
 @Controller
 public class UserController {
 
-    private final ReactiveOAuth2AuthorizedClientManager manager;
-
     private final UserService userService;
     private final AccountService accountService;
 
-    public UserController(ReactiveOAuth2AuthorizedClientManager manager, UserService userService, AccountService accountService) {
-        this.manager = manager;
+    public UserController(UserService userService, AccountService accountService) {
         this.userService = userService;
         this.accountService = accountService;
     }
@@ -54,16 +53,17 @@ public class UserController {
     }
 
     @GetMapping("/main")
-    public Mono<String> mainPage(@AuthenticationPrincipal Mono<UserDetails> userDetailsMono, Model model) {
+    public Mono<String> mainPage(@RegisteredOAuth2AuthorizedClient("front-ui") OAuth2AuthorizedClient authorizedClient,
+                                 @AuthenticationPrincipal OidcUser oidcUser,
+                                 Model model) {
+            return  userService.callAccountsService(authorizedClient, oidcUser)
+                    .flatMap(str-> {
+                        model.addAttribute("login", str);
+                         return Mono.just("main");
+                    });
 
-        manager.authorize(OAuth2AuthorizeRequest
-                        .withClientRegistrationId("front-ui")
-                        .principal("ivanov")
-                        .build())
-                .map(OAuth2AuthorizedClient::getAccessToken)
-                .map(OAuth2AccessToken::getTokenValue).subscribe(token -> System.out.println("-----------JWT TOKEN: " + token));
-
-        return userDetailsMono
+/*
+            return userDetailsMono
                 .flatMap(userDetails->{
                     return userService.findByUsername(userDetails.getUsername())//приходится каждый раз получать пользователя,
                             // т.к. если мы обновили его данные  и не переполучили их, то на форме остануися старые данные
@@ -85,8 +85,9 @@ public class UserController {
                                 return Mono.just("main");
                             });
                 });
-    }
 
+ */
+    }
 
     @PostMapping("/user/editPassword")
     public Mono<String> editPassword(
@@ -144,6 +145,7 @@ public class UserController {
         accountService.deleteAccount(accountId);
         return Mono.just("redirect:/main");
     }
+
 
     @PostMapping("/user/cash")
     public Mono<String> cashOperation(
