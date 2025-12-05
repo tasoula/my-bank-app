@@ -17,9 +17,9 @@ import org.springframework.web.server.ServerWebExchange;
 import java.net.URI;
 
 
+
 @Configuration
 @EnableWebFluxSecurity
-@EnableReactiveMethodSecurity
 public class SecurityConfig {
     @Bean
     public SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http) {
@@ -27,6 +27,13 @@ public class SecurityConfig {
                 // Отключение CSRF-защиты
                 //.csrf(ServerHttpSecurity.CsrfSpec::disable)
                 //.authorizeExchange(exchanges -> exchanges.anyExchange().permitAll())
+                .authorizeExchange(
+                        exchanges -> {
+                            exchanges
+                                    .pathMatchers("/actuator/health").permitAll()
+                                    .anyExchange().permitAll();//.authenticated();
+                        }
+                )
                 .build();
     }
 }

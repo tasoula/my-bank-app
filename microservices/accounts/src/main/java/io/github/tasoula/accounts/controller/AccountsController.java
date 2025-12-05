@@ -34,7 +34,7 @@ public class AccountsController {
     */
 
 
-    @GetMapping("/accounts/api")
+    @GetMapping("/api")
     public String mainPage(Authentication authentication) {
         return "Accounts servie answer";
     }

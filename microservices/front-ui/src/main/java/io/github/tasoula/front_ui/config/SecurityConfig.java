@@ -42,7 +42,7 @@ public class SecurityConfig {
                         exchanges -> {
                             exchanges
                                     .pathMatchers("/css/**", "/js/**").permitAll()
-                                   // .pathMatchers("/signup", "/login").permitAll()
+                                    .pathMatchers("/actuator/health").permitAll()
                                     .anyExchange().authenticated();
                         }
                 )

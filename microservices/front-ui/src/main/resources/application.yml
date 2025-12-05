@@ -3,7 +3,7 @@ server:
 
 spring:
   application:
-    name: Front-UI Service
+    name: front-ui
 
   security:
     oauth2:
@@ -19,10 +19,22 @@ spring:
             client-secret:  ${FRONT_UI_KEYCLOAK_CLIENT_SECRET}
             redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
             scope: openid, profile, email
+
+  config.import: "consul:"
+  cloud:
+    consul:
+      host: localhost          # Адрес Consul (по умолчанию localhost)
+      port: 8500               # Порт Consul (8500 по умолчанию)
+      discovery:
+        service-name: front-ui  # Необязательно, по умолчанию берётся spring.application.name
+        ip-address: 127.0.0.1
+        prefer-ip-address: true
+      config:
+        enabled: true            # Включаем Consul Config для внешней конфигурации
+        prefix: config           # Префикс в KV-хранилище Consul (по умолчанию "config")
+        defaultContext: application  # Контекст по умолчанию
+
 logging:
   level:
     org.springframework.security: DEBUG
 
-accounts:
-  service:
-    url:  http://localhost:${ACCOUNTS_PORT}
