@@ -3,6 +3,11 @@ server:
 spring:
   application:
     name: api-gateway
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://${KEYCLOAK_ISSUER_HOST_AND_PORT:localhost:8082}/realms/master
   config.import: "consul:"
   cloud:
     consul:

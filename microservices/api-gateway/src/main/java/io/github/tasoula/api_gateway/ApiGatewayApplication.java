@@ -20,10 +20,4 @@ public class ApiGatewayApplication {
 
 		SpringApplication.run(ApiGatewayApplication.class, args);
 	}
-
-	@Bean
-	@LoadBalanced  // Делает RestTemplate "discovery-aware"
-	public RestTemplate restTemplate() {
-		return new RestTemplate();
-	}
 }

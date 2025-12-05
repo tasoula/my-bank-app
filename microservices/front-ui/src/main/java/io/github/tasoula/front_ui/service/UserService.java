@@ -67,8 +67,8 @@ public class UserService implements ReactiveUserDetailsService {
 
         return webClient.get()
                // .uri("http://localhost:8070/accounts/api")
-               // .uri("http://api-gateway/accounts/api")
-                .uri("http://account-service/api")
+                .uri("http://api-gateway/accounts/api")
+                // .uri("http://accounts-service/api")
                //    .uri("http://localhost:8081/api")
                 .retrieve()
                 .bodyToMono(String.class);

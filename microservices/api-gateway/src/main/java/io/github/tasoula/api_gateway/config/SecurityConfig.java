@@ -31,8 +31,11 @@ public class SecurityConfig {
                         exchanges -> {
                             exchanges
                                     .pathMatchers("/actuator/health").permitAll()
-                                    .anyExchange().permitAll();//.authenticated();
+                                    .anyExchange().authenticated();
                         }
+                )
+                .oauth2ResourceServer(oauth2ResourceServer -> // Включаем поддержку Resource Server
+                        oauth2ResourceServer.jwt(jwt -> {})
                 )
                 .build();
     }

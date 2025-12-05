@@ -26,10 +26,13 @@ public class SecurityConfig {
                                 // Разрешить доступ без аутентификации к /actuator/health
                                 .requestMatchers("/actuator/health").permitAll()
                                 // Требовать аутентификацию для всех остальных запросов
-                                .anyRequest().authenticated()
+                                .anyRequest().permitAll()
                 )
+                .oauth2ResourceServer(oauth2ResourceServer -> // Включаем поддержку Resource Server
+                        oauth2ResourceServer.jwt(jwt -> {})
+                );
                 // Использование стандартной формы входа (или других механизмов по умолчанию)
-                .httpBasic(Customizer.withDefaults());
+              //  .httpBasic(Customizer.withDefaults());
 
         // Если нужно отключить CSRF (раскомментируйте, если требуется, хотя обычно это не рекомендуется)
         // .csrf(csrf -> csrf.disable());
