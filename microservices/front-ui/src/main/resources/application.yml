@@ -1,6 +1,3 @@
-server:
-  port: ${FRONT_UI_PORT}
-
 spring:
   application:
     name: front-ui
@@ -10,30 +7,30 @@ spring:
       client:
         provider:
           keycloak:
-            issuer-uri: http://${KEYCLOAK_ISSUER_HOST_AND_PORT:localhost:8082}/realms/master
+            issuer-uri: ${keycloak.issuer-uri}
         registration:
           front-ui:
             provider: keycloak
             authorizationGrantType: authorization_code
             client-id: front-ui
-            client-secret:  ${FRONT_UI_KEYCLOAK_CLIENT_SECRET}
+            client-secret: ${front-ui.client-secret}
             redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
             scope: openid, profile, email
 
   config.import: "consul:"
   cloud:
     consul:
-      host: localhost          # Адрес Consul (по умолчанию localhost)
-      port: 8500               # Порт Consul (8500 по умолчанию)
+      host: ${CONSUL_HOST}          # Адрес Consul (по умолчанию localhost)
+      port: ${CONSUL_PORT}               # Порт Consul (8500 по умолчанию)
       discovery:
         service-name: front-ui  # Необязательно, по умолчанию берётся spring.application.name
-        ip-address: 127.0.0.1
+        ip-address: ${app.ip-address}
         prefer-ip-address: true
       config:
         enabled: true            # Включаем Consul Config для внешней конфигурации
         prefix: config           # Префикс в KV-хранилище Consul (по умолчанию "config")
         defaultContext: application  # Контекст по умолчанию
-
+        format: YAML
 logging:
   level:
     org.springframework.security: DEBUG
