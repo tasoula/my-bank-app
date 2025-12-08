@@ -22,6 +22,7 @@ import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
 import org.springframework.security.oauth2.client.ReactiveOAuth2AuthorizedClientManager;
 import org.springframework.security.oauth2.client.annotation.RegisteredOAuth2AuthorizedClient;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
+import org.springframework.security.oauth2.core.oidc.OidcUserInfo;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -56,11 +57,19 @@ public class UserController {
     public Mono<String> mainPage(@RegisteredOAuth2AuthorizedClient("front-ui") OAuth2AuthorizedClient authorizedClient,
                                  @AuthenticationPrincipal OidcUser oidcUser,
                                  Model model) {
-            return  userService.callAccountsService(authorizedClient, oidcUser)
-                    .flatMap(str-> {
-                        model.addAttribute("login", str);
-                         return Mono.just("main");
-                    });
+        OidcUserInfo userInfo = oidcUser.getUserInfo();
+        model.addAttribute("login", userInfo.getPreferredUsername());
+        model.addAttribute("name", userInfo.getFullName());
+        model.addAttribute("email", userInfo.getEmail());
+        model.addAttribute("birthdate",userInfo.getBirthdate());
+        return Mono.just("main");
+
+
+        //    return  userService.callAccountsService(authorizedClient, oidcUser)
+         //           .flatMap(str-> {
+
+
+          //          });
 
 /*
             return userDetailsMono
@@ -70,10 +79,10 @@ public class UserController {
                             // а может лучше менять данные в userDetails?
                             .cast(User.class)
                             .flatMap(user-> {// todo Передаем в модель пользователя со списком его счетов
-                                model.addAttribute("login", user.getLogin());
-                                model.addAttribute("name", user.getName());
-                                model.addAttribute("email", user.getEmail());
-                                model.addAttribute("birthdate", user.getBirthdate());
+                                model.addAttribute("login", oidcUser.getUserInfo().getPreferredUsername());
+                                model.addAttribute("name", oidcUser.getUserInfo().getFullName());
+                                model.addAttribute("email", oidcUser.getUserInfo().getEmail());
+                                model.addAttribute("birthdate", oidcUser.getUserInfo().getBirthdate());
                                 model.addAttribute("users", userService.getOthers(user.getLogin()));
                                 // todo так же в модель надо передать список доступных валют с курсами
                                 model.addAttribute("availableCurrencies", accountService.getCurrencies());
