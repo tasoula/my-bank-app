@@ -7,6 +7,18 @@ spring:
       resourceserver:
         jwt:
           issuer-uri: ${keycloak.issuer-uri}
+      client:
+        provider:
+          keycloak:
+            issuer-uri: ${keycloak.issuer-uri}
+        registration:
+          cash:
+            provider: keycloak
+            authorizationGrantType: authorization_code
+            client-id: cash
+            client-secret: ${cash.client-secret}
+            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+            scope: openid, profile, email
 
   config.import: "consul:"
   cloud:
