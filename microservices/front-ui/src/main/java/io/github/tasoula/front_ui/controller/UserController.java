@@ -1,34 +1,23 @@
 package io.github.tasoula.front_ui.controller;
 
 
-import io.github.tasoula.front_ui.dto.CashOperationDto;
-import io.github.tasoula.front_ui.dto.TransferDto;
-import io.github.tasoula.front_ui.dto.TransferOtherDto;
 import io.github.tasoula.front_ui.dto.UserDto;
-import io.github.tasoula.front_ui.enums.OperationEnum;
-import io.github.tasoula.front_ui.model.Account;
-import io.github.tasoula.front_ui.model.User;
 import io.github.tasoula.front_ui.service.AccountService;
 import io.github.tasoula.front_ui.service.UserService;
-import io.github.tasoula.front_ui.validation.groups.PasswordChangeGroup;
 import io.github.tasoula.front_ui.validation.groups.UpdateGroup;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.Setter;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PostMapping;
 import reactor.core.publisher.Mono;
 
-import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 @Controller
 public class UserController {
@@ -46,71 +35,55 @@ public class UserController {
         return Mono.just("redirect:/main");
     }
 
+    @GetMapping ("/post-login")
+    public Mono<String> postLogin(@AuthenticationPrincipal OidcUser oidcUser){
+        return Mono.just("redirect:/main");
+    }
+
+
     @GetMapping("/main")
-    public Mono<String> mainPage(@AuthenticationPrincipal Mono<UserDetails> userDetailsMono, Model model) {
+    public Mono<String> mainPage(//@RegisteredOAuth2AuthorizedClient("front-ui") OAuth2AuthorizedClient authorizedClient,
+                                 @AuthenticationPrincipal OidcUser oidcUser,
+                                 Model model) {
 
-        return userDetailsMono
-                .flatMap(userDetails->{
-                    return userService.findByUsername(userDetails.getUsername())//приходится каждый раз получать пользователя,
-                            // т.к. если мы обновили его данные  и не переполучили их, то на форме остануися старые данные
-                            // а может лучше менять данные в userDetails?
-                            .cast(User.class)
-                            .flatMap(user-> {// todo Передаем в модель пользователя со списком его счетов
-                                model.addAttribute("login", user.getLogin());
-                                model.addAttribute("name", user.getName());
-                                model.addAttribute("email", user.getEmail());
-                                model.addAttribute("birthdate", user.getBirthdate());
-                                model.addAttribute("users", userService.getOthers(user.getLogin()));
-                                // todo так же в модель надо передать список доступных валют с курсами
-                                model.addAttribute("availableCurrencies", accountService.getCurrencies());
-                                model.addAttribute("currentUserAccounts", accountService.getUserAccounts(user.getId()));
-                               // model.addAttribute("users", userService.getUsers()) // если нам нужно выбирать пользователя из списка,
-                                // но всех пользователей банка выводить неправильно, т.к. их очень много
-                                // поэтому правиленее вводить самим, например его номер телефона или другой уникальный идентификатор
-                                // т.к. телефона у нас нет, то будем считать, что фамилия и имя уникально или добавить к фамилии и иени email
-                                return Mono.just("main");
-                            });
+        String login = oidcUser.getUserInfo().getPreferredUsername();
+
+        return userService.findByUsername(login)
+                .flatMap(user -> {// todo Передаем в модель пользователя со списком его счетов
+                    model.addAttribute("login", login);
+                    model.addAttribute("name", user.getName());
+                    model.addAttribute("email", user.getEmail());
+                    model.addAttribute("birthdate", user.getBirthdate());
+                    model.addAttribute("balance", user.getBalance());
+                 //   model.addAttribute("users", userService.getOthers(user.getLogin()));
+                    // todo так же в модель надо передать список доступных валют с курсами
+                 //   model.addAttribute("availableCurrencies", accountService.getCurrencies());
+                 //   model.addAttribute("currentUserAccounts", accountService.getUserAccounts(user.getId()));
+                    // model.addAttribute("users", userService.getUsers()) // если нам нужно выбирать пользователя из списка,
+                    // но всех пользователей банка выводить неправильно, т.к. их очень много
+                    // поэтому правиленее вводить самим, например его номер телефона или другой уникальный идентификатор
+                    // т.к. телефона у нас нет, то будем считать, что фамилия и имя уникально или добавить к фамилии и иени email
+                    return Mono.just("main");
                 });
     }
 
-    @PostMapping("/user/editPassword")
-    public Mono<String> editPassword(
-            @AuthenticationPrincipal Mono<UserDetails> userDetailsMono,
-            @Validated(PasswordChangeGroup.class) @ModelAttribute UserDto updDto,
-            BindingResult bindingResult,
-            Model model) {
 
-        if (bindingResult.hasErrors()) {
-            List<String> errors = new ArrayList<>();
-            bindingResult.getAllErrors().forEach(error -> errors.add(error.getDefaultMessage()));
-            model.addAttribute("passwordErrors", errors);
-            return Mono.just("/main"); // Возвращаем страницу с ошибками
-        }
 
-        return userDetailsMono.cast(User.class)
-                .flatMap(user -> userService.updateUser(user, updDto))
-                .then(Mono.just("redirect:/main"))//todo хорошо бы добавить надпись, что пароль изменен
-                .onErrorResume(RuntimeException.class, ex -> {
-                    model.addAttribute("passwordErrors", List.of(ex.getMessage()));
-                    return Mono.just("/main"); // Возвращаем страницу с ошибками
-                });
-    }
+     @PostMapping("/user/editUser")
+    public Mono<String> editUser(@AuthenticationPrincipal OidcUser oidcUser,
+                                @Validated(UpdateGroup.class) @ModelAttribute UserDto dto,
+                                BindingResult bindingResult,
+                                Model model) {
 
-    @PostMapping("/user/editUser")
-    public Mono<String> editUser(
-            @AuthenticationPrincipal Mono<UserDetails> userDetailsMono,
-            @Validated(UpdateGroup.class) @ModelAttribute UserDto dto,
-            BindingResult bindingResult,
-            Model model) {
-        // todo общая логика с изменением пароля
         if (bindingResult.hasErrors()) {
             List<String> errors = new ArrayList<>();
             bindingResult.getAllErrors().forEach(error -> errors.add(error.getDefaultMessage()));
             model.addAttribute("userAccountErrors", errors);
             return Mono.just("/main"); // Возвращаем страницу с ошибками
         }
-        return userDetailsMono.cast(User.class)
-                .flatMap(user-> userService.updateUser(user, dto))
+
+        String login = oidcUser.getUserInfo().getPreferredUsername();
+        return  userService.updateUser(login, dto)
                 .then(Mono.just("redirect:/main"))
                 .onErrorResume(RuntimeException.class, ex -> {
                     model.addAttribute("userAccountErrors", List.of(ex.getMessage()));
@@ -118,6 +91,7 @@ public class UserController {
                 });
     }
 
+    /*
     @PostMapping("/user/accounts/open")
     public Mono<String> createAccount(@AuthenticationPrincipal Mono<UserDetails> userDetailsMono){
         accountService.createAccount();
@@ -129,6 +103,7 @@ public class UserController {
         accountService.deleteAccount(accountId);
         return Mono.just("redirect:/main");
     }
+
 
     @PostMapping("/user/cash")
     public Mono<String> cashOperation(
@@ -196,7 +171,7 @@ public class UserController {
     }
 */
     // Вспомогательные методы для валидации (заглушки)
-    private List<String> validatePassword(String password, String confirmPassword) {
+ /*   private List<String> validatePassword(String password, String confirmPassword) {
         // Реализуйте логику валидации пароля
         return List.of();
     }
@@ -262,11 +237,13 @@ public class UserController {
        }
    }
 */
-    @AllArgsConstructor
+  /*  @AllArgsConstructor
     @Getter
     @Setter
     public static class UserInfo {
         private String login;
         private String name;
     }
+
+   */
 }

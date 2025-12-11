@@ -13,38 +13,14 @@
 
 <table style="width:70%;margin-left:auto;margin-right:auto; margin-top: 20px;">
     <tr><td style="padding:5px;">
-        <form method="post" th:action="${'/user/editPassword'}">
-            <table class="section-table">
-                <tr>
-                    <td colspan="3" class="section-header">Изменение пароля</td>
-                </tr>
-                <tr>
-                    <td style="font-weight:bold; width: 20%;">Логин</td>
-                    <td colspan="2" th:text="${login}"/>
-                </tr>
-                <tr>
-                    <td style="font-weight:bold;">Новый пароль</td>
-                    <td>
-                        <p class="error" th:if="${passwordErrors!=null}" th:each="passwordError : ${passwordErrors}" th:text="${passwordError}"/>
-                        <p>
-                            Пароль: <input name="password" type="password" required/>
-                        </p>
-                        <p>
-                            Повторите пароль: <input name="confirm_password" type="password" required/>
-                        </p>
-                    </td>
-                    <td style="text-align:right">
-                        <button type="submit">Изменить пароль</button>
-                    </td>
-                </tr>
-            </table>
-        </form>
-    </td></tr>
-    <tr><td style="padding:5px;">
         <form method="post" th:action="@{/user/editUser}">
             <table class="section-table">
                 <tr>
                     <td colspan="3" class="section-header">Данные пользователя</td>
+                </tr>
+                <tr>
+                    <td style="font-weight:bold; width: 20%;">Логин</td>
+                    <td colspan="2" th:text="${login}"/>
                 </tr>
                 <tr th:if="${userAccountErrors!=null}" th:each="userAccountError : ${userAccountErrors}">
                     <td style="color:red;" th:text="${userAccountError}"/>
@@ -71,6 +47,10 @@
                     </td>
                 </tr>
                 <tr>
+                    <td style="font-weight:bold;">Сумма на счете</td>
+                    <td colspan="2" th:text="${balance}"/>
+                </tr>
+                <tr>
                     <td style="text-align:right" colspan="3">
                         <button type="submit">Сохранить изменения</button>
                     </td>
@@ -79,65 +59,6 @@
         </form>
     </td></tr>
     <tr><td style="padding:5px;">
-        <form method="post" th:action="${'/delete'}">
-            <table class="section-table">
-                <tr>
-                    <td colspan="3" style="text-align:right; padding-top: 20px;">
-                        <button onclick="return confirm('Вы уверены, что хотите удалить аккаунт? Это действие необратимо.');">Удалить аккаунт</button>
-                    </td>
-                </tr>
-            </table>
-        </form>
-    </td></tr>
-    <!-- НОВЫЙ БЛОК: Управление счетами -->
-    <tr><td style="padding:5px;">
-        <table class="section-table">
-            <tr>
-                <td colspan="3" class="section-header">Управление счетами</td>
-            </tr>
-            <tr th:if="${accountErrors!=null}" th:each="accountError : ${accountErrors}">
-                <td colspan="3" class="error" th:text="${accountError}"/>
-            </tr>
-            <tr>
-                <td style="font-weight:bold; width: 20%;">Ваши счета</td>
-                <td colspan="2">
-                    <table style="width:100%; border: none;">
-                        <tr th:if="${currentUserAccounts == null || currentUserAccounts.isEmpty()}">
-                            <td colspan="3">У вас пока нет счетов.</td>
-                        </tr>
-                        <tr th:each="account : ${currentUserAccounts}">
-                            <td style="width:30%; border: none;" th:text="${account.currency}"/>
-                            <td style="width:50%; border: none;" th:text="${#numbers.formatDecimal(account.balance, 0, 'COMMA', 2, 'POINT')}"/>
-                            <td style="width:20%; border: none;">
-                                <form method="post" th:action="${'/user/accounts/'+account.id+'/close'}" style="display:inline;">
-                                    <button type="submit" th:disabled="${account.balance != 0}"
-                                            title="Закрыть счет можно только при нулевом балансе">Закрыть</button>
-                                </form>
-                            </td>
-                        </tr>
-                    </table>
-                </td>
-            </tr>
-            <tr>
-                <td style="font-weight:bold;">Открыть новый счет</td>
-                <td>
-                    <form method="post" th:action="${'/user/accounts/open'}">
-                        <select name="currency" required>
-                            <option value="">Выберите валюту</option>
-                            <option th:each="currency : ${availableCurrencies}" th:value="${currency}" th:text="${currency}"/>
-                        </select>
-                        <button type="submit">Открыть счет</button>
-                    </form>
-                </td>
-                <td style="text-align:right">
-
-                </td>
-            </tr>
-        </table>
-    </td></tr>
-
-    <!-- ОБНОВЛЕННЫЙ БЛОК: Операции с наличными (с выбором счета) -->
-    <tr><td style="padding:5px;">
         <form method="post" th:action="${'/user/cash'}">
             <table class="section-table">
                 <tr>
@@ -145,16 +66,6 @@
                 </tr>
                 <tr th:if="${cashErrors!=null}" th:each="cashError : ${cashErrors}">
                     <td colspan="4" class="error" th:text="${cashError}"/>
-                </tr>
-                <tr>
-                    <td style="font-weight:bold; width: 15%;">Счет</td>
-                    <td colspan="3">
-                        <select name="accountId" style="width:auto; min-width: 200px;" required>
-                            <option value="">Выберите счет</option>
-                            <option th:each="account : ${currentUserAccounts}" th:value="${account.id}"
-                                    th:text="${account.currency + ' (Баланс: ' + #numbers.formatDecimal(account.balance, 0, 'COMMA', 2, 'POINT') + ')'}"></option>
-                        </select>
-                    </td>
                 </tr>
                 <tr>
                     <td style="font-weight:bold;">Сумма</td>
@@ -170,50 +81,7 @@
         </form>
     </td></tr>
 
-    <!-- НОВЫЙ БЛОК: Перевод между своими счетами -->
-    <tr><td style="padding:5px;">
-        <form method="post" th:action="${'/user/transfer/own'}">
-            <table class="section-table">
-                <tr>
-                    <td colspan="3" class="section-header">Перевод между своими счетами</td>
-                </tr>
-                <tr th:if="${ownTransferErrors!=null}" th:each="ownTransferError : ${ownTransferErrors}">
-                    <td colspan="3" class="error" th:text="${ownTransferError}"/>
-                </tr>
-                <tr>
-                    <td style="font-weight:bold; width: 20%;">Со счета</td>
-                    <td colspan="2">
-                        <select name="from_account_id" style="width:auto; min-width: 200px;" required>
-                            <option value="">Выберите счет списания</option>
-                            <option th:each="account : ${currentUserAccounts}" th:value="${account.id}"
-                                    th:text="${account.currency + ' (Баланс: ' + #numbers.formatDecimal(account.balance, 0, 'COMMA', 2, 'POINT') + ')'}"/>
-                        </select>
-                    </td>
-                </tr>
-                <tr>
-                    <td style="font-weight:bold;">На счет</td>
-                    <td colspan="2">
-                        <select name="to_account_id" style="width:auto; min-width: 200px;" required>
-                            <option value="">Выберите счет зачисления</option>
-                            <option th:each="account : ${currentUserAccounts}" th:value="${account.id}"
-                                    th:text="${account.currency + ' (Баланс: ' + #numbers.formatDecimal(account.balance, 0, 'COMMA', 2, 'POINT') + ')'}"/>
-                        </select>
-                    </td>
-                </tr>
-                <tr>
-                    <td style="font-weight:bold;">Сумма</td>
-                    <td>
-                        <input name="amount" type="number" step="0.01" min="0.01" required placeholder="Введите сумму"/>
-                    </td>
-                    <td style="text-align:right">
-                        <button>Перевести</button>
-                    </td>
-                </tr>
-            </table>
-        </form>
-    </td></tr>
 
-    <!-- ОБНОВЛЕННЫЙ БЛОК: Перевод другому пользователю (с выбором своего счета) -->
     <tr><td style="padding:5px;">
         <form method="post" th:action="${'/user/transfer/other'}">
             <table class="section-table">
@@ -222,16 +90,6 @@
                 </tr>
                 <tr th:if="${transferOtherErrors!=null}" th:each="transferOtherError : ${transferOtherErrors}">
                     <td colspan="4" class="error" th:text="${transferOtherError}"/>
-                </tr>
-                <tr>
-                    <td style="font-weight:bold; width: 15%;">Со счета</td>
-                    <td colspan="3">
-                        <select name="from_account_id" style="width:auto; min-width: 200px;" required>
-                            <option value="">Выберите счет списания</option>
-                            <option th:each="account : ${currentUserAccounts}" th:value="${account.id}"
-                                    th:text="${account.currency + ' (Баланс: ' + #numbers.formatDecimal(account.balance, 0, 'COMMA', 2, 'POINT') + ')'}"/>
-                        </select>
-                    </td>
                 </tr>
                 <tr>
                     <td style="font-weight:bold;">Кому</td>
@@ -255,54 +113,6 @@
                         <button>Перевести</button>
                     </td>
                 </tr>
-            </table>
-        </form>
-    </td></tr>
-    <!-- НОВЫЙ БЛОК: Курсы валют  -->
-    <tr><td style="padding:5px;">
-        <form method="post" th:action="${'/user/exchange'}">
-            <table class="section-table">
-                <tr>
-                    <td colspan="4" class="section-header">Курсы валют</td>
-                </tr>
-                <tr th:if="${exchangeErrors!=null}" th:each="exchangeError : ${exchangeErrors}">
-                    <td colspan="4" class="error" th:text="${exchangeError}"/>
-                </tr>
-                <tr>
-                    <td style="font-weight:bold; width:25%; text-align:center;">Валюта</td>
-                    <td style="font-weight:bold; width:25%; text-align:center;">Продажа</td>
-                    <td style="font-weight:bold; width:25%; text-align:center;">Покупка</td>
-                    <td style="font-weight:bold; width:25%;"></td>
-                </tr>
-                <tr th:if="${fromCurrencyCode != null and toCurrencyCode != null}">
-                    <td th:text="${fromCurrencyCode}" style="text-align:center;"></td>
-                    <td th:text="${#numbers.formatDecimal(rateFromCurrencyToRub, 0, 'COMMA', 4, 'POINT') + ' RUB'}" style="text-align:center;"></td>
-                    <td th:text="${#numbers.formatDecimal(rateToCurrencyToRub, 0, 'COMMA', 4, 'POINT') + ' RUB'}" style="text-align:center;"></td>
-                    <td></td>
-                </tr>
-                <!-- Amount to exchange (Sell) --нужно только отображение курса
-                <tr>
-                    <td style="font-weight:bold;">Продать</td>
-                    <td>
-                        <input name="amountSell" type="number" step="0.01" min="0.01" style="width:100%" placeholder="Сумма для продажи"/>
-                    </td>
-                    <td></td>
-                    <td style="text-align:right">
-                        <button name="action" value="sell">Продать</button>
-                    </td>
-                </tr>-->
-                <!-- Amount to exchange (Buy)
-                <tr>
-                    <td style="font-weight:bold;">Купить</td>
-                    <td>
-                        <input name="amountBuy" type="number" step="0.01" min="0.01" style="width:100%" placeholder="Сумма для покупки"/>
-                    </td>
-                    <td></td>
-                    <td style="text-align:right">
-                        <button name="action" value="buy">Купить</button>
-                    </td>
-                </tr>-->
-
             </table>
         </form>
     </td></tr>

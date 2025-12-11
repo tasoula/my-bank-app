@@ -1,50 +1,30 @@
 package io.github.tasoula.front_ui.service;
 
 import io.github.tasoula.front_ui.dto.UserDto;
-import io.github.tasoula.front_ui.exceptions.UserAlreadyExistsException;
 import io.github.tasoula.front_ui.model.User;
-import org.springframework.security.core.userdetails.ReactiveUserDetailsService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
-import java.time.LocalDate;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-
 @Service
-public class UserService implements ReactiveUserDetailsService {
+public class UserService  {
 
-    private final PasswordEncoder passwordEncoder;
+    @Autowired
+    private WebClient webClient;
 
-    private final Map<String, User> repository; // заменить на Map<UUID, User>
-    User other;
-
-    public UserService(PasswordEncoder passwordEncoder) {
-        this.passwordEncoder = passwordEncoder;
-
-        repository = new HashMap<>();
-        other = new User(UUID.randomUUID(),
-                "otherUser",
-                passwordEncoder.encode("qwertyui"),
-                "Иванов Иван Иванович",
-                "ivanov_other@mail.ru",
-                LocalDate.parse("2002-11-12"));
-        repository.put("otherUser", other);
-    }
-
-    @Override
-    public Mono<UserDetails> findByUsername(String username) {
-        return repository.containsKey(username) ? Mono.just(repository.get(username)) : Mono.empty();
+    public Mono<User> findByUsername(String login) {
+        return webClient.get()
+                .uri("http://api-gateway/accounts/user/" + login)
+                .retrieve()
+                .bodyToMono(User.class);
     }
 
     public Mono<UserDetails> createUser(UserDto userRegistrationDto) {
         // todo обращение в сервис Accounts
         // будем создавать по умолчанию рублевый счет
-        return Mono.fromCallable(() -> {
+     /*   return Mono.fromCallable(() -> {
             if (repository.containsKey(userRegistrationDto.getLogin())) {
                 throw new UserAlreadyExistsException("пользователь с таким логином уже зарегистрирован");
             } else {
@@ -62,30 +42,39 @@ public class UserService implements ReactiveUserDetailsService {
                 return savedUser;
             }
         });
-    }
 
-    public Mono<Void> deleteUser(User user) {
-        repository.remove(user.getLogin());
+
+      */
         return Mono.empty();
     }
 
-    public Mono<?> updateUser(User user, UserDto updDto) {
-        User updated = new User(
-                user.getId(),
-                (updDto.getLogin() == null || updDto.getLogin().isEmpty()) ? user.getLogin() : updDto.getLogin(),
-                (updDto.getPassword() == null || updDto.getPassword().isEmpty()) ? user.getPassword() : passwordEncoder.encode(updDto.getPassword()),
-                (updDto.getName() == null || updDto.getName().isEmpty()) ? user.getName() : updDto.getName(),
-                (updDto.getEmail() == null || updDto.getEmail().isEmpty()) ? user.getEmail() : updDto.getEmail(),
-                (updDto.getBirthdate() == null) ? user.getBirthdate() : updDto.getBirthdate()
-        );
-
-        repository.remove(user.getLogin());
-        repository.put(updated.getLogin(), updated);
-        return Mono.just(updated);
+    public Mono<String> deleteUser(User user) {
+        return Mono.empty();
     }
 
-    public List<User> getOthers(String login) {
-        return List.of(other);
+    public Mono<User> updateUser(String login, UserDto updDto) {
+        User updated = new User(
+                null,
+                updDto.getLogin(),
+                updDto.getName(),
+                updDto.getEmail() ,
+                updDto.getBirthdate() ,
+                null
+        );
+
+
+        return webClient.post()
+                .uri("http://api-gateway/accounts/user/update/" + login)
+                //.contentType(MediaType.APPLICATION_JSON) // Указываем тип контента как JSON
+                .bodyValue(updated)
+                .retrieve()
+                .bodyToMono(User.class)
+                .doOnSuccess(user -> System.out.println("------------------------" + user.getLogin() + " " + user.getName()))
+                .doOnError(error -> {
+                    // Логируем ошибку, если запрос к API-Gateway не удался
+                    System.err.println("Ошибка при вызове accounts/api: " + error.getMessage());
+                })
+                .onErrorResume(Exception.class, e -> Mono.empty());
     }
 }
 

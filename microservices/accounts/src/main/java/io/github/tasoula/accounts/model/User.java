@@ -1,5 +1,6 @@
-package io.github.tasoula.front_ui.model;
+package io.github.tasoula.accounts.model;
 
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -11,7 +12,11 @@ import java.util.UUID;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class User {
+@Entity
+@Table(name = "t_accounts")
+public class User  {
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
     UUID id;
     String login;
     String name;
