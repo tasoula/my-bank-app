@@ -1,30 +1,23 @@
 package io.github.tasoula.front_ui.config;
 
+import io.github.tasoula.front_ui.model.User;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.server.reactive.ServerHttpResponse;
-import org.springframework.security.authentication.ReactiveAuthenticationManager;
-import org.springframework.security.authentication.UserDetailsRepositoryReactiveAuthenticationManager;
 import org.springframework.security.config.annotation.method.configuration.EnableReactiveMethodSecurity;
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
-import org.springframework.security.core.userdetails.ReactiveUserDetailsService;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.client.oidc.web.server.logout.OidcClientInitiatedServerLogoutSuccessHandler;
 import org.springframework.security.oauth2.client.registration.ReactiveClientRegistrationRepository;
 import org.springframework.security.web.server.SecurityWebFilterChain;
 import org.springframework.security.web.server.authentication.ServerAuthenticationSuccessHandler;
-import org.springframework.security.web.server.authentication.logout.RedirectServerLogoutSuccessHandler;
 import org.springframework.security.web.server.authentication.logout.ServerLogoutSuccessHandler;
 import org.springframework.security.web.server.authorization.HttpStatusServerAccessDeniedHandler;
-import org.springframework.security.web.server.context.ServerSecurityContextRepository;
 import org.springframework.security.web.server.context.WebSessionServerSecurityContextRepository;
+import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.server.ServerWebExchange;
-import org.springframework.web.util.UriComponentsBuilder;
 import reactor.core.publisher.Mono;
-
 
 import java.net.URI;
 
@@ -32,6 +25,13 @@ import java.net.URI;
 @EnableWebFluxSecurity
 @EnableReactiveMethodSecurity
 public class SecurityConfig {
+
+    private final ReactiveClientRegistrationRepository clientRegistrationRepository;
+
+    public SecurityConfig(ReactiveClientRegistrationRepository clientRegistrationRepository) {
+        this.clientRegistrationRepository = clientRegistrationRepository;
+    }
+
     @Bean
     public SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http) {
         return http
@@ -68,21 +68,36 @@ public class SecurityConfig {
                 .build();
     }
 
+    @Autowired
+    private WebClient webClient;
+
     @Bean
     public ServerAuthenticationSuccessHandler successHandler() {
-        return (webFilterExchange, authentication) -> {
+
+        return  (webFilterExchange, authentication) -> {
+
             ServerWebExchange exchange = webFilterExchange.getExchange();
+
+            // 1. Выполнение POST-запроса через WebClient
+            Mono<User> webClientCall = webClient.post()
+                    .uri("http://api-gateway/accounts/create-if-not-exists")
+                    .retrieve()
+                    .bodyToMono(User.class)
+                    .doOnSuccess(user -> System.out.println("------------------------" + user.getLogin() + " " + user.getName()))
+                    .doOnError(error -> {
+                        // Логируем ошибку, если запрос к API-Gateway не удался
+                        System.err.println("Ошибка при вызове accounts/api: " + error.getMessage());
+                    })
+                    .onErrorResume(Exception.class, e -> Mono.empty()); // Продолжаем выполнение, даже если запрос к API не удался
+
+            // 2. Установка статуса и заголовка перенаправления
             exchange.getResponse().setStatusCode(HttpStatus.SEE_OTHER);
             exchange.getResponse().getHeaders().setLocation(URI.create("/main"));
-            return exchange.getResponse().setComplete();
+
+            // 3. Объединение выполнения запроса WebClient и завершения ответа сервера.
+            // Используем .then() для выполнения завершения ответа после того, как запрос к API завершится (успешно или с ошибкой).
+            return webClientCall.then(exchange.getResponse().setComplete());
         };
-    }
-
-
-    private final ReactiveClientRegistrationRepository clientRegistrationRepository;
-
-    public SecurityConfig(ReactiveClientRegistrationRepository clientRegistrationRepository) {
-        this.clientRegistrationRepository = clientRegistrationRepository;
     }
 
     // Замените ваш текущий private метод logoutSuccessHandler() на этот бин:
