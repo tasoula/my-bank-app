@@ -37,12 +37,6 @@ public class AccountsController {
 
     */
 
-
-    @GetMapping("/api")
-    public String mainPage(Authentication authentication) {
-        return "Accounts servie answer";
-    }
-
     @PostMapping("create-if-not-exists")
     public User createIfNotExists(Authentication authentication){
         Jwt principal = (Jwt)authentication.getPrincipal();
@@ -76,5 +70,10 @@ public class AccountsController {
     @PostMapping("user/update/{login}")
     public User update(@PathVariable String login, @RequestBody User updUser){
         return service.update(login, updUser);
+    }
+
+    @GetMapping("/api")
+    public String mainPage(Authentication authentication) {
+        return "Accounts servie answer";
     }
 }

@@ -4,6 +4,7 @@ package io.github.tasoula.front_ui.controller;
 import io.github.tasoula.front_ui.dto.CashOperationDto;
 import io.github.tasoula.front_ui.dto.UserDto;
 import io.github.tasoula.front_ui.enums.OperationEnum;
+import io.github.tasoula.front_ui.exceptions.InsufficientFundsException;
 import io.github.tasoula.front_ui.service.AccountService;
 import io.github.tasoula.front_ui.service.CashService;
 import io.github.tasoula.front_ui.service.UserService;
@@ -37,34 +38,14 @@ public class UserController {
         this.cashService = cashService;
     }
 
-    @GetMapping("/")
-    public Mono<String> redirectToMain() {
-        return Mono.just("redirect:/main");
-    }
-
-    @GetMapping ("/post-login")
-    public Mono<String> postLogin(@AuthenticationPrincipal OidcUser oidcUser){
-        return Mono.just("redirect:/main");
-    }
-
-
     @GetMapping("/main")
     public Mono<String> mainPage(//@RegisteredOAuth2AuthorizedClient("front-ui") OAuth2AuthorizedClient authorizedClient,
                                  @AuthenticationPrincipal OidcUser oidcUser,
                                  Model model,
                                  WebSession session) {
 
-        List<String> userAccountErrors = session.getAttribute("userAccountErrors");
-        if (userAccountErrors != null) {
-            model.addAttribute("userAccountErrors", userAccountErrors);
-            session.getAttributes().remove("userAccountErrors");  // 2. Очищаем сессию сразу после извлечения
-        }
-
-        List<String> cashErrors = session.getAttribute("cashErrors");
-        if (userAccountErrors != null) {
-            model.addAttribute("cashErrors", userAccountErrors);
-            session.getAttributes().remove("cashErrors");  // 2. Очищаем сессию сразу после извлечения
-        }
+        moveErrorsToModel("userAccountErrors", session, model);
+        moveErrorsToModel("cashErrors", session, model);
 
         String login = oidcUser.getUserInfo().getPreferredUsername();
 
@@ -85,6 +66,14 @@ public class UserController {
                     // т.к. телефона у нас нет, то будем считать, что фамилия и имя уникально или добавить к фамилии и иени email
                     return Mono.just("main");
                 });
+    }
+
+    private void moveErrorsToModel(String errorAttribute, WebSession session, Model model){
+        List<String> errors = session.getAttribute(errorAttribute);
+        if (errors != null) {
+            model.addAttribute(errorAttribute, errors);
+            session.getAttributes().remove(errorAttribute);  // 2. Очищаем сессию сразу после извлечения
+        }
     }
 
      @PostMapping("/user/editUser")
@@ -122,15 +111,40 @@ public class UserController {
             return Mono.just("redirect:/main"); // Возвращаем страницу с ошибками
         }
         String login = oidcUser.getUserInfo().getPreferredUsername();
+
+        Mono<Void> operationMono;
+
         switch (cashDto.getAction()){
-            case OperationEnum.DEPOSIT -> cashService.deposit(login, cashDto.getAmount());
-            case OperationEnum.WITHDRAW -> cashService.withdraw(login, cashDto.getAmount());
+            case OperationEnum.DEPOSIT -> operationMono = cashService.deposit(login, cashDto.getAmount());
+            case OperationEnum.WITHDRAW -> operationMono = cashService.withdraw(login, cashDto.getAmount());
+            default -> operationMono = Mono.error(new IllegalArgumentException("Неизвестная операция"));
         };
 
-        return Mono.just("redirect:/main");
+        // Обрабатываем результат операции реактивно
+        return operationMono
+                .then(Mono.just("redirect:/main")) // Если успешно, редиректим на главную
+                .onErrorResume(Exception.class, ex -> {//InsufficientFundsException.class, ex -> {
+                    // 1. Если недостаточно средств, добавляем ошибку в сессию и редиректим
+                    List<String> errors = new ArrayList<>();
+                    errors.add(ex.getMessage());
+                    session.getAttributes().put("cashErrors", errors);
+                    return Mono.just("redirect:/main");
+                })
+                .onErrorResume(Exception.class, ex -> {
+                    // 2. Для остальных ошибок показываем экран с описанием ошибки
+                    // Вместо редиректа на "redirect:/main", возвращаем имя шаблона ошибки
+                    // или можно добавить ошибку в сессию и редиректить на специальную страницу ошибки.
+
+                    // Пример 1: Редирект на специальную страницу, передавая ошибку через сессию/query param
+                    session.getAttributes().put("generalError", ex.getMessage());
+                    return Mono.just("redirect:/errorPage");
+
+                    // Пример 2: Возвращаем имя представления (например, "errorTemplate.html")
+                    // return Mono.just("errorTemplate");
+                });
+
+      //  return Mono.just("redirect:/main");
     }
-
-
 
     /*
     @PostMapping("/user/accounts/open")
