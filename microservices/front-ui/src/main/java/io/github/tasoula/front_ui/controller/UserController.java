@@ -1,10 +1,14 @@
 package io.github.tasoula.front_ui.controller;
 
 
+import io.github.tasoula.front_ui.dto.CashOperationDto;
 import io.github.tasoula.front_ui.dto.UserDto;
+import io.github.tasoula.front_ui.enums.OperationEnum;
 import io.github.tasoula.front_ui.service.AccountService;
+import io.github.tasoula.front_ui.service.CashService;
 import io.github.tasoula.front_ui.service.UserService;
 import io.github.tasoula.front_ui.validation.groups.UpdateGroup;
+import jakarta.validation.Valid;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.stereotype.Controller;
@@ -14,6 +18,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.server.WebSession;
 import reactor.core.publisher.Mono;
 
 import java.util.ArrayList;
@@ -24,10 +29,12 @@ public class UserController {
 
     private final UserService userService;
     private final AccountService accountService;
+    private final CashService cashService;
 
-    public UserController(UserService userService, AccountService accountService) {
+    public UserController(UserService userService, AccountService accountService, CashService cashService) {
         this.userService = userService;
         this.accountService = accountService;
+        this.cashService = cashService;
     }
 
     @GetMapping("/")
@@ -44,7 +51,20 @@ public class UserController {
     @GetMapping("/main")
     public Mono<String> mainPage(//@RegisteredOAuth2AuthorizedClient("front-ui") OAuth2AuthorizedClient authorizedClient,
                                  @AuthenticationPrincipal OidcUser oidcUser,
-                                 Model model) {
+                                 Model model,
+                                 WebSession session) {
+
+        List<String> userAccountErrors = session.getAttribute("userAccountErrors");
+        if (userAccountErrors != null) {
+            model.addAttribute("userAccountErrors", userAccountErrors);
+            session.getAttributes().remove("userAccountErrors");  // 2. Очищаем сессию сразу после извлечения
+        }
+
+        List<String> cashErrors = session.getAttribute("cashErrors");
+        if (userAccountErrors != null) {
+            model.addAttribute("cashErrors", userAccountErrors);
+            session.getAttributes().remove("cashErrors");  // 2. Очищаем сессию сразу после извлечения
+        }
 
         String login = oidcUser.getUserInfo().getPreferredUsername();
 
@@ -67,29 +87,50 @@ public class UserController {
                 });
     }
 
-
-
      @PostMapping("/user/editUser")
     public Mono<String> editUser(@AuthenticationPrincipal OidcUser oidcUser,
                                 @Validated(UpdateGroup.class) @ModelAttribute UserDto dto,
                                 BindingResult bindingResult,
-                                Model model) {
+                                 WebSession session) {
 
+         if (bindingResult.hasErrors()) {
+             List<String> errors = new ArrayList<>();
+             bindingResult.getAllErrors().forEach(error -> errors.add(error.getDefaultMessage()));
+             session.getAttributes().put("userAccountErrors", errors);
+             return Mono.just("redirect:/main"); // Возвращаем страницу с ошибками
+         }
+
+         String login = oidcUser.getUserInfo().getPreferredUsername();
+         return userService.updateUser(login, dto)
+                 .then(Mono.just("redirect:/main"))
+                 .onErrorResume(RuntimeException.class, ex -> {
+                     session.getAttributes().put("userAccountErrors", List.of(ex.getMessage()));
+                     return Mono.just("redirect:/main"); // Возвращаем страницу с ошибками
+                 });
+     }
+
+    @PostMapping("/user/cash")
+    public Mono<String> cash(@AuthenticationPrincipal OidcUser oidcUser,
+                             @Valid CashOperationDto cashDto,
+                             BindingResult bindingResult,
+                             WebSession session)
+    {
         if (bindingResult.hasErrors()) {
             List<String> errors = new ArrayList<>();
             bindingResult.getAllErrors().forEach(error -> errors.add(error.getDefaultMessage()));
-            model.addAttribute("userAccountErrors", errors);
-            return Mono.just("/main"); // Возвращаем страницу с ошибками
+            session.getAttributes().put("cashErrors", errors);
+            return Mono.just("redirect:/main"); // Возвращаем страницу с ошибками
         }
-
         String login = oidcUser.getUserInfo().getPreferredUsername();
-        return  userService.updateUser(login, dto)
-                .then(Mono.just("redirect:/main"))
-                .onErrorResume(RuntimeException.class, ex -> {
-                    model.addAttribute("userAccountErrors", List.of(ex.getMessage()));
-                    return Mono.just("/main"); // Возвращаем страницу с ошибками
-                });
+        switch (cashDto.getAction()){
+            case OperationEnum.DEPOSIT -> cashService.deposit(login, cashDto.getAmount());
+            case OperationEnum.WITHDRAW -> cashService.withdraw(login, cashDto.getAmount());
+        };
+
+        return Mono.just("redirect:/main");
     }
+
+
 
     /*
     @PostMapping("/user/accounts/open")
