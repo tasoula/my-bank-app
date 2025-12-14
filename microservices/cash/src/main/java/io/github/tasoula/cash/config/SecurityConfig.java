@@ -24,7 +24,7 @@ public class SecurityConfig {
                                 // Разрешить доступ без аутентификации к /actuator/health
                                 .requestMatchers("/actuator/health").permitAll()
                                 // Требовать аутентификацию для всех остальных запросов
-                                .anyRequest().permitAll()
+                                .anyRequest().authenticated()
                 )
                 .oauth2ResourceServer(oauth2ResourceServer -> // Включаем поддержку Resource Server
                         oauth2ResourceServer.jwt(jwt -> {})

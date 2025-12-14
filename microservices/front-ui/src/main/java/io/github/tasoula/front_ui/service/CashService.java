@@ -28,8 +28,16 @@ public class CashService {
                 .bodyToMono(Void.class);
     }
 
+
+
     public Mono<Void> withdraw(String login, BigDecimal amount){
-        return Mono.empty();
+        return webClient .post()
+                .uri("http://api-gateway/cash/withdraw")
+                .contentType(MediaType.APPLICATION_JSON) // Указываем тип контента как JSON
+                .bodyValue(amount)
+                .retrieve()
+                .onStatus(status -> !status.is2xxSuccessful(), this::handlePaymentErrorStatus)
+                .bodyToMono(Void.class);
     }
 
     private Mono<? extends Throwable> handlePaymentErrorStatus(ClientResponse response) {

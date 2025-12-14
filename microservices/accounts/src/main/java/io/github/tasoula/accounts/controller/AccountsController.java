@@ -1,5 +1,6 @@
 package io.github.tasoula.accounts.controller;
 
+import io.github.tasoula.accounts.dto.CashOperationDto;
 import io.github.tasoula.accounts.exceptions.UserNotFoundException;
 import io.github.tasoula.accounts.model.User;
 import io.github.tasoula.accounts.service.AccountsService;
@@ -75,5 +76,15 @@ public class AccountsController {
     @GetMapping("/api")
     public String mainPage(Authentication authentication) {
         return "Accounts servie answer";
+    }
+
+    @PostMapping("/deposit")
+    public void diposit(@RequestBody CashOperationDto dto){
+        service.deposit(dto);
+    }
+
+    @PostMapping("/withdraw")
+    public void withdraw(@RequestBody CashOperationDto dto){
+        service.withdraw(dto);
     }
 }

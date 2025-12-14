@@ -14,10 +14,9 @@ spring:
         registration:
           cash:
             provider: keycloak
-            authorizationGrantType: authorization_code
+            authorizationGrantType: client_credentials
             client-id: cash
             client-secret: ${cash.client-secret}
-            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
             scope: openid, profile, email
 
   config.import: "consul:"
