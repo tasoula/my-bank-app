@@ -1,4 +1,4 @@
-package io.github.tasoula.accounts.exceptions;
+package io.github.tasoula.cash.exceptions;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ResponseStatus;

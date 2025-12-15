@@ -4,7 +4,6 @@ package io.github.tasoula.front_ui.controller;
 import io.github.tasoula.front_ui.dto.CashOperationDto;
 import io.github.tasoula.front_ui.dto.UserDto;
 import io.github.tasoula.front_ui.enums.OperationEnum;
-import io.github.tasoula.front_ui.exceptions.InsufficientFundsException;
 import io.github.tasoula.front_ui.service.AccountService;
 import io.github.tasoula.front_ui.service.CashService;
 import io.github.tasoula.front_ui.service.UserService;

@@ -1,7 +1,6 @@
 package io.github.tasoula.front_ui.service;
 
-import io.github.tasoula.front_ui.exceptions.InsufficientFundsException;
-import io.github.tasoula.front_ui.model.User;
+import io.github.tasoula.front_ui.exceptions.PaymentException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -28,8 +27,6 @@ public class CashService {
                 .bodyToMono(Void.class);
     }
 
-
-
     public Mono<Void> withdraw(String login, BigDecimal amount){
         return webClient .post()
                 .uri("http://api-gateway/cash/withdraw")
@@ -44,7 +41,7 @@ public class CashService {
         HttpStatus status = (HttpStatus) response.statusCode();
 
         if (HttpStatus.PAYMENT_REQUIRED.equals(status)) {
-            return Mono.error(new InsufficientFundsException("Операция не прошла (недостаточно средств)"));
+            return Mono.error(new PaymentException("Операция не прошла (недостаточно средств)"));
         } else if (HttpStatus.NOT_FOUND.equals(status)) {
             return Mono.error(new NoSuchElementException("Операция не прошла (счет не найден)"));
         } else if (HttpStatus.BAD_REQUEST.equals(status)) {
