@@ -4,6 +4,7 @@ package io.github.tasoula.front_ui.controller;
 import io.github.tasoula.front_ui.dto.CashOperationDto;
 import io.github.tasoula.front_ui.dto.UserDto;
 import io.github.tasoula.front_ui.enums.OperationEnum;
+import io.github.tasoula.front_ui.exceptions.PaymentException;
 import io.github.tasoula.front_ui.service.AccountService;
 import io.github.tasoula.front_ui.service.CashService;
 import io.github.tasoula.front_ui.service.UserService;
@@ -64,6 +65,10 @@ public class UserController {
                     // поэтому правиленее вводить самим, например его номер телефона или другой уникальный идентификатор
                     // т.к. телефона у нас нет, то будем считать, что фамилия и имя уникально или добавить к фамилии и иени email
                     return Mono.just("main");
+                })
+                .onErrorResume(RuntimeException.class, ex -> {
+                    model.addAttribute("generalError", ex.getMessage());
+                    return Mono.just("errorPage");
                 });
     }
 
@@ -122,7 +127,7 @@ public class UserController {
         // Обрабатываем результат операции реактивно
         return operationMono
                 .then(Mono.just("redirect:/main")) // Если успешно, редиректим на главную
-                .onErrorResume(Exception.class, ex -> {//InsufficientFundsException.class, ex -> {
+                .onErrorResume(PaymentException.class, ex -> {
                     // 1. Если недостаточно средств, добавляем ошибку в сессию и редиректим
                     List<String> errors = new ArrayList<>();
                     errors.add(ex.getMessage());

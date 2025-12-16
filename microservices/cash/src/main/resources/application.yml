@@ -15,9 +15,8 @@ spring:
           cash:
             provider: keycloak
             authorizationGrantType: client_credentials
-            client-id: cash
+            client-id: cash-service
             client-secret: ${cash.client-secret}
-            scope: openid, profile, email
 
   config.import: "consul:"
   cloud:

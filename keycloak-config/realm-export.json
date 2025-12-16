@@ -135,36 +135,30 @@
       }
     ],
     "client": {
-      "front-ui": [
+      "front-ui": [],
+      "cash-service": [
         {
-          "id": "79c428d6-4407-49af-8beb-d750dd090eaf",
+          "id": "b6670c5e-5664-4052-8775-027ba16e86b8",
           "name": "Cash-access",
-          "description": "access to Cash microservice",
+          "description": "",
           "composite": false,
           "clientRole": true,
-          "containerId": "99faa51a-1286-4d15-8ce5-3dc2f38009af",
-          "attributes": {}
-        },
-        {
-          "id": "945126a6-18e1-408b-a865-229666556d5f",
-          "name": "Accounts-access",
-          "description": "access to Accounts microservice",
-          "composite": false,
-          "clientRole": true,
-          "containerId": "99faa51a-1286-4d15-8ce5-3dc2f38009af",
-          "attributes": {}
-        },
-        {
-          "id": "7186babe-a6b6-4f63-b3d7-c82f1780bd81",
-          "name": "Transfer-access",
-          "description": "access to Transfer microservice",
-          "composite": false,
-          "clientRole": true,
-          "containerId": "99faa51a-1286-4d15-8ce5-3dc2f38009af",
+          "containerId": "f2dbd86f-ee5b-4ae8-9790-3d1433d8caf0",
           "attributes": {}
         }
       ],
       "security-admin-console": [],
+      "accounts-service": [
+        {
+          "id": "34bc673d-a2e1-4201-800a-e8623c9cc52c",
+          "name": "Accounts-access",
+          "description": "Role for access to accounts-service of my-bank application",
+          "composite": false,
+          "clientRole": true,
+          "containerId": "83dfdbdf-eb60-424f-8d78-829e315dab78",
+          "attributes": {}
+        }
+      ],
       "admin-cli": [],
       "account-console": [],
       "broker": [
@@ -357,17 +351,6 @@
           "attributes": {}
         }
       ],
-      "cash": [
-        {
-          "id": "6abccb22-6d21-41c4-939d-d5356c065aa0",
-          "name": "Accounts-access",
-          "description": "access to Accounts microservice",
-          "composite": false,
-          "clientRole": true,
-          "containerId": "f2dbd86f-ee5b-4ae8-9790-3d1433d8caf0",
-          "attributes": {}
-        }
-      ],
       "account": [
         {
           "id": "fe92dff1-84cc-412b-89af-d22bd1df8f8f",
@@ -458,23 +441,7 @@
       ]
     }
   },
-  "groups": [
-    {
-      "id": "81505049-34e4-47e3-a96f-7277ef5f94b2",
-      "name": "front-ui-users",
-      "path": "/front-ui-users",
-      "subGroups": [],
-      "attributes": {},
-      "realmRoles": [],
-      "clientRoles": {
-        "front-ui": [
-          "Cash-access",
-          "Accounts-access",
-          "Transfer-access"
-        ]
-      }
-    }
-  ],
+  "groups": [],
   "defaultRole": {
     "id": "a2d31ed5-4e55-46b8-874b-352536954336",
     "name": "default-roles-master",
@@ -529,18 +496,39 @@
   "webAuthnPolicyPasswordlessExtraOrigins": [],
   "users": [
     {
-      "id": "080034f9-94cc-4ba9-9fae-a8a9314822f5",
-      "username": "service-account-cash",
+      "id": "dba01d6f-baac-44f6-b943-f2aa59b2c6ff",
+      "username": "service-account-accounts-service",
       "emailVerified": false,
-      "createdTimestamp": 1765449832121,
+      "createdTimestamp": 1765882418640,
       "enabled": true,
       "totp": false,
-      "serviceAccountClientId": "cash",
+      "serviceAccountClientId": "accounts-service",
       "disableableCredentialTypes": [],
       "requiredActions": [],
       "realmRoles": [
         "default-roles-master"
       ],
+      "notBefore": 0,
+      "groups": []
+    },
+    {
+      "id": "080034f9-94cc-4ba9-9fae-a8a9314822f5",
+      "username": "service-account-cash-service",
+      "emailVerified": false,
+      "createdTimestamp": 1765449832121,
+      "enabled": true,
+      "totp": false,
+      "serviceAccountClientId": "cash-service",
+      "disableableCredentialTypes": [],
+      "requiredActions": [],
+      "realmRoles": [
+        "default-roles-master"
+      ],
+      "clientRoles": {
+        "accounts-service": [
+          "Accounts-access"
+        ]
+      },
       "notBefore": 0,
       "groups": []
     }
@@ -554,6 +542,14 @@
     }
   ],
   "clientScopeMappings": {
+    "accounts-service": [
+      {
+        "clientScope": "accounts",
+        "roles": [
+          "Accounts-access"
+        ]
+      }
+    ],
     "account": [
       {
         "client": "account-console",
@@ -671,6 +667,65 @@
       ]
     },
     {
+      "id": "83dfdbdf-eb60-424f-8d78-829e315dab78",
+      "clientId": "accounts-service",
+      "name": "accounts-service",
+      "description": "Client for accounts service of my-bank application",
+      "rootUrl": "",
+      "adminUrl": "",
+      "baseUrl": "",
+      "surrogateAuthRequired": false,
+      "enabled": true,
+      "alwaysDisplayInConsole": false,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "**********",
+      "redirectUris": [
+        "/*"
+      ],
+      "webOrigins": [
+        "/*"
+      ],
+      "notBefore": 0,
+      "bearerOnly": false,
+      "consentRequired": false,
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": true,
+      "serviceAccountsEnabled": true,
+      "publicClient": false,
+      "frontchannelLogout": true,
+      "protocol": "openid-connect",
+      "attributes": {
+        "realm_client": "false",
+        "oidc.ciba.grant.enabled": "false",
+        "client.secret.creation.time": "1765882418",
+        "backchannel.logout.session.required": "true",
+        "frontchannel.logout.session.required": "true",
+        "oauth2.device.authorization.grant.enabled": "false",
+        "display.on.consent.screen": "false",
+        "backchannel.logout.revoke.offline.tokens": "false"
+      },
+      "authenticationFlowBindingOverrides": {},
+      "fullScopeAllowed": true,
+      "nodeReRegistrationTimeout": -1,
+      "defaultClientScopes": [
+        "web-origins",
+        "service_account",
+        "acr",
+        "profile",
+        "roles",
+        "basic",
+        "email"
+      ],
+      "optionalClientScopes": [
+        "address",
+        "phone",
+        "offline_access",
+        "organization",
+        "microprofile-jwt"
+      ]
+    },
+    {
       "id": "819c1b07-d3f9-4883-ab85-5f028c555176",
       "clientId": "admin-cli",
       "name": "${client_admin-cli}",
@@ -757,9 +812,9 @@
     },
     {
       "id": "f2dbd86f-ee5b-4ae8-9790-3d1433d8caf0",
-      "clientId": "cash",
-      "name": "Cash-access",
-      "description": "Client for Cash service",
+      "clientId": "cash-service",
+      "name": "cash-service",
+      "description": "Client for Cash service of my-bank application",
       "rootUrl": "",
       "adminUrl": "",
       "baseUrl": "",
@@ -803,6 +858,7 @@
         "acr",
         "profile",
         "roles",
+        "accounts",
         "basic",
         "email"
       ],
@@ -884,7 +940,9 @@
         "acr",
         "profile",
         "roles",
+        "accounts",
         "basic",
+        "cash",
         "email"
       ],
       "optionalClientScopes": [
@@ -1060,6 +1118,30 @@
           }
         }
       ]
+    },
+    {
+      "id": "d8034c01-5bea-4448-8701-780395450079",
+      "name": "cash",
+      "description": "Client scope for access to cash-service of my-bank application\n",
+      "protocol": "openid-connect",
+      "attributes": {
+        "include.in.token.scope": "false",
+        "display.on.consent.screen": "true",
+        "gui.order": "",
+        "consent.screen.text": ""
+      }
+    },
+    {
+      "id": "19fc5a89-0827-4a3e-9432-83e9de5ba657",
+      "name": "accounts",
+      "description": "Scope for access to accounts-service of my-bank-application",
+      "protocol": "openid-connect",
+      "attributes": {
+        "include.in.token.scope": "false",
+        "display.on.consent.screen": "true",
+        "gui.order": "",
+        "consent.screen.text": ""
+      }
     },
     {
       "id": "977a8cb2-57f9-472c-8602-05b40d163502",
