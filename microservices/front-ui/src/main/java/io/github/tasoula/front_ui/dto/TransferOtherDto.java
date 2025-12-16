@@ -12,7 +12,6 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 public class TransferOtherDto {
-    UUID from_account_id;
-    String to_login; //todo возможно, это лучше заменить на id пользователя
+    String to_login;
     BigDecimal amount;
 }

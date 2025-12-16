@@ -2,4 +2,5 @@ rootProject.name = 'my-bank-app'
 include 'microservices:front-ui',
         'microservices:accounts',
         'microservices:api-gateway',
-        'microservices:cash'
+        'microservices:cash',
+        'microservices:transfer'

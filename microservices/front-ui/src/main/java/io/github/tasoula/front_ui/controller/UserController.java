@@ -2,11 +2,12 @@ package io.github.tasoula.front_ui.controller;
 
 
 import io.github.tasoula.front_ui.dto.CashOperationDto;
+import io.github.tasoula.front_ui.dto.TransferOtherDto;
 import io.github.tasoula.front_ui.dto.UserDto;
 import io.github.tasoula.front_ui.enums.OperationEnum;
 import io.github.tasoula.front_ui.exceptions.PaymentException;
-import io.github.tasoula.front_ui.service.AccountService;
 import io.github.tasoula.front_ui.service.CashService;
+import io.github.tasoula.front_ui.service.TransferService;
 import io.github.tasoula.front_ui.service.UserService;
 import io.github.tasoula.front_ui.validation.groups.UpdateGroup;
 import jakarta.validation.Valid;
@@ -29,12 +30,12 @@ import java.util.List;
 public class UserController {
 
     private final UserService userService;
-    private final AccountService accountService;
+    private final TransferService transferService;
     private final CashService cashService;
 
-    public UserController(UserService userService, AccountService accountService, CashService cashService) {
+    public UserController(UserService userService, TransferService transferService, CashService cashService) {
         this.userService = userService;
-        this.accountService = accountService;
+        this.transferService = transferService;
         this.cashService = cashService;
     }
 
@@ -56,7 +57,7 @@ public class UserController {
                     model.addAttribute("email", user.getEmail());
                     model.addAttribute("birthdate", user.getBirthdate());
                     model.addAttribute("balance", user.getBalance());
-                 //   model.addAttribute("users", userService.getOthers(user.getLogin()));
+                    model.addAttribute("users", transferService.getOthers(user.getLogin()));
                     // todo так же в модель надо передать список доступных валют с курсами
                  //   model.addAttribute("availableCurrencies", accountService.getCurrencies());
                  //   model.addAttribute("currentUserAccounts", accountService.getUserAccounts(user.getId()));
@@ -149,6 +150,25 @@ public class UserController {
 
       //  return Mono.just("redirect:/main");
     }
+
+    @PostMapping("/user/transfer/other")
+    public Mono<String> transfer(@AuthenticationPrincipal OidcUser oidcUser,
+                             @Valid TransferOtherDto transferDto,
+                             BindingResult bindingResult,
+                             WebSession session){
+        if (bindingResult.hasErrors()) {
+            List<String> errors = new ArrayList<>();
+            bindingResult.getAllErrors().forEach(error -> errors.add(error.getDefaultMessage()));
+            session.getAttributes().put("transferOtherError", errors);
+            return Mono.just("redirect:/main"); // Возвращаем страницу с ошибками
+        }
+        String login = oidcUser.getUserInfo().getPreferredUsername();
+        Mono<Void> operationMono = transferService.transfer(transferDto);
+
+
+        return Mono.just("redirect:/main");
+    }
+
 
     /*
     @PostMapping("/user/accounts/open")

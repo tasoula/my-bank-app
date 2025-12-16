@@ -438,6 +438,17 @@
           "containerId": "ead3d08e-c554-4732-b524-d8b2f35d3675",
           "attributes": {}
         }
+      ],
+      "transfer-service": [
+        {
+          "id": "c44364bc-52e4-434f-8596-825b27087be5",
+          "name": "Transfer-access",
+          "description": "Role for access to transfer-service of my-bank application",
+          "composite": false,
+          "clientRole": true,
+          "containerId": "a6f470b0-1a95-4812-accb-217b606580f0",
+          "attributes": {}
+        }
       ]
     }
   },
@@ -531,6 +542,22 @@
       },
       "notBefore": 0,
       "groups": []
+    },
+    {
+      "id": "01ba1ae3-394a-4dde-a6f0-f755d3ca607c",
+      "username": "service-account-transfer-service",
+      "emailVerified": false,
+      "createdTimestamp": 1765917268062,
+      "enabled": true,
+      "totp": false,
+      "serviceAccountClientId": "transfer-service",
+      "disableableCredentialTypes": [],
+      "requiredActions": [],
+      "realmRoles": [
+        "default-roles-master"
+      ],
+      "notBefore": 0,
+      "groups": []
     }
   ],
   "scopeMappings": [
@@ -556,6 +583,14 @@
         "roles": [
           "manage-account",
           "view-groups"
+        ]
+      }
+    ],
+    "transfer-service": [
+      {
+        "clientScope": "transfer",
+        "roles": [
+          "Transfer-access"
         ]
       }
     ]
@@ -938,6 +973,7 @@
       "defaultClientScopes": [
         "web-origins",
         "acr",
+        "transfer",
         "profile",
         "roles",
         "accounts",
@@ -1049,6 +1085,63 @@
       ],
       "defaultClientScopes": [
         "web-origins",
+        "acr",
+        "profile",
+        "roles",
+        "basic",
+        "email"
+      ],
+      "optionalClientScopes": [
+        "address",
+        "phone",
+        "offline_access",
+        "organization",
+        "microprofile-jwt"
+      ]
+    },
+    {
+      "id": "a6f470b0-1a95-4812-accb-217b606580f0",
+      "clientId": "transfer-service",
+      "name": "transfer-service",
+      "description": "Client for transfer-service of my-bank application",
+      "rootUrl": "",
+      "adminUrl": "",
+      "baseUrl": "",
+      "surrogateAuthRequired": false,
+      "enabled": true,
+      "alwaysDisplayInConsole": false,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "**********",
+      "redirectUris": [
+        "/*"
+      ],
+      "webOrigins": [
+        "/*"
+      ],
+      "notBefore": 0,
+      "bearerOnly": false,
+      "consentRequired": false,
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": true,
+      "serviceAccountsEnabled": true,
+      "publicClient": false,
+      "frontchannelLogout": true,
+      "protocol": "openid-connect",
+      "attributes": {
+        "realm_client": "false",
+        "oidc.ciba.grant.enabled": "false",
+        "client.secret.creation.time": "1765917268",
+        "backchannel.logout.session.required": "true",
+        "oauth2.device.authorization.grant.enabled": "false",
+        "backchannel.logout.revoke.offline.tokens": "false"
+      },
+      "authenticationFlowBindingOverrides": {},
+      "fullScopeAllowed": true,
+      "nodeReRegistrationTimeout": -1,
+      "defaultClientScopes": [
+        "web-origins",
+        "service_account",
         "acr",
         "profile",
         "roles",
@@ -1656,6 +1749,18 @@
           "config": {}
         }
       ]
+    },
+    {
+      "id": "0f332555-8fcd-4f4f-b065-dcd33fb381e4",
+      "name": "transfer",
+      "description": "Scope for access to transfer-service of my-bank application",
+      "protocol": "openid-connect",
+      "attributes": {
+        "include.in.token.scope": "false",
+        "display.on.consent.screen": "true",
+        "gui.order": "",
+        "consent.screen.text": ""
+      }
     },
     {
       "id": "36b83523-e723-40bd-82b0-858074c59f10",
