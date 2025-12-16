@@ -1,5 +1,7 @@
 package io.github.tasoula.accounts.service;
 
+import io.github.tasoula.accounts.dto.CashOperationDto;
+import io.github.tasoula.accounts.exceptions.PaymentException;
 import io.github.tasoula.accounts.exceptions.UserNotFoundException;
 import io.github.tasoula.accounts.model.User;
 import io.github.tasoula.accounts.repository.AccountsRepository;
@@ -47,5 +49,23 @@ public class AccountsService {
         if(updUser.getBirthdate() != null) existingUser.setBirthdate(updUser.getBirthdate());
         if(updUser.getBalance() != null) existingUser.setBalance(updUser.getBalance());
         return repository.save(existingUser);
+    }
+
+    public void deposit(CashOperationDto dto) {
+        User user = repository.findByLogin(dto.getLogin())
+                .orElseThrow(() -> new UserNotFoundException(dto.getLogin()));
+        user.setBalance(user.getBalance().add(dto.getAmount()));
+        repository.save(user);
+    }
+
+    public void withdraw(CashOperationDto dto) {
+        User user = repository.findByLogin(dto.getLogin())
+                .orElseThrow(() -> new UserNotFoundException(dto.getLogin()));
+        BigDecimal currentBalance = user.getBalance();
+        if(currentBalance.compareTo(dto.getAmount()) < 0){
+            throw new PaymentException("Недостаточно средств");
+        }
+        user.setBalance(currentBalance.subtract(dto.getAmount()));
+        repository.save(user);
     }
 }

@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Ошибка системы</title>
+    <style>
+        body { font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; background-color: #f8f9fa; }
+        .error-container { text-align: center; padding: 2rem; border: 1px solid #dee2e6; border-radius: 8px; background: white; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        h1 { color: #dc3545; }
+        p { color: #6c757d; }
+        .btn { display: inline-block; margin-top: 1rem; padding: 0.5rem 1rem; color: white; background-color: #007bff; text-decoration: none; border-radius: 4px; }
+    </style>
+</head>
+<body>
+
+<div class="error-container">
+    <h1>Произошла ошибка</h1>
+
+    <!-- Извлекаем сообщение из сессии, которое вы положили в контроллере -->
+    <p th:text="${generalError}">Описание ошибки отсутствует</p>
+
+    <a href="/main" class="btn">Вернуться на главную</a>
+</div>
+
+</body>
+</html>

@@ -1,4 +1,4 @@
-package io.github.tasoula.accounts.config;
+package io.github.tasoula.cash.config;
 
 
 import org.springframework.context.annotation.Bean;
@@ -16,7 +16,7 @@ import java.util.stream.Collectors;
 
 
 @Configuration
-@EnableWebSecurity // Замена @EnableWebFluxSecurity
+@EnableWebSecurity
 public class SecurityConfig {
 
     @Bean
@@ -28,13 +28,16 @@ public class SecurityConfig {
                                 // Разрешить доступ без аутентификации к /actuator/health
                                 .requestMatchers("/actuator/health").permitAll()
                                 // Требовать аутентификацию для всех остальных запросов
-                                .anyRequest().hasRole("Accounts-access")//.authenticated()
+                                .anyRequest().hasRole("Cash-access")
                 )
-                .oauth2ResourceServer(oauth2ResourceServer -> // Включаем поддержку Resource Server
+              //  .oauth2ResourceServer(oauth2ResourceServer -> // Включаем поддержку Resource Server
+              //          oauth2ResourceServer.jwt(jwt -> {})
+              //  )
+                .oauth2ResourceServer(oauth2ResourceServer ->
                         oauth2ResourceServer.jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter()))
-                );
-                // Использование стандартной формы входа (или других механизмов по умолчанию)
-              //  .httpBasic(Customizer.withDefaults());
+                );;
+        // Использование стандартной формы входа (или других механизмов по умолчанию)
+        //  .httpBasic(Customizer.withDefaults());
 
         // Если нужно отключить CSRF (раскомментируйте, если требуется, хотя обычно это не рекомендуется)
         // .csrf(csrf -> csrf.disable());
@@ -49,11 +52,11 @@ public class SecurityConfig {
         jwtAuthenticationConverter.setJwtGrantedAuthoritiesConverter(jwt -> {
             Map<String, Object> resourceAccess = jwt.getClaim("resource_access");
 
-            if (resourceAccess == null || !resourceAccess.containsKey("accounts-service")) {
+            if (resourceAccess == null || !resourceAccess.containsKey("cash-service")) {
                 return Collections.emptyList();
             }
 
-            Map<String, Object> bankAccounts = (Map<String, Object>) resourceAccess.get("accounts-service");
+            Map<String, Object> bankAccounts = (Map<String, Object>) resourceAccess.get("cash-service");
             List<String> roles = (List<String>) bankAccounts.get("roles");
 
             return roles.stream()
@@ -66,6 +69,7 @@ public class SecurityConfig {
     }
 
 }
+
 
 
 

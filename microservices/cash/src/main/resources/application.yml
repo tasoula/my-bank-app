@@ -1,0 +1,44 @@
+spring:
+  application:
+    name: cash-service
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${keycloak.issuer-uri}
+      client:
+        provider:
+          keycloak:
+            issuer-uri: ${keycloak.issuer-uri}
+        registration:
+          cash:
+            provider: keycloak
+            authorizationGrantType: client_credentials
+            client-id: cash-service
+            client-secret: ${cash.client-secret}
+
+  config.import: "consul:"
+  cloud:
+    consul:
+      host: ${CONSUL_HOST}
+      port: ${CONSUL_PORT}
+      discovery:
+        service-name: cash-service
+        ip-address: ${app.ip-address}
+        prefer-ip-address: true
+      config:
+        enabled: true
+        prefix: config
+        defaultContext: application
+        format: YAML
+logging:
+  level:
+    root: INFO
+    org:
+      springframework:
+        security: DEBUG
+        cloud.gateway: DEBUG
+        web.servlet: DEBUG
+        web.method: DEBUG
+        web.filter: DEBUG
