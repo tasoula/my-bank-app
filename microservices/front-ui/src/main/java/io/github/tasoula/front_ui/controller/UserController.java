@@ -47,6 +47,7 @@ public class UserController {
 
         moveErrorsToModel("userAccountErrors", session, model);
         moveErrorsToModel("cashErrors", session, model);
+        moveErrorsToModel("transferOtherErrors", session, model);
 
         String login = oidcUser.getUserInfo().getPreferredUsername();
 
@@ -159,14 +160,32 @@ public class UserController {
         if (bindingResult.hasErrors()) {
             List<String> errors = new ArrayList<>();
             bindingResult.getAllErrors().forEach(error -> errors.add(error.getDefaultMessage()));
-            session.getAttributes().put("transferOtherError", errors);
+            session.getAttributes().put("transferOtherErrors", errors);
             return Mono.just("redirect:/main"); // Возвращаем страницу с ошибками
         }
         String login = oidcUser.getUserInfo().getPreferredUsername();
         Mono<Void> operationMono = transferService.transfer(transferDto);
+        return operationMono
+                .then(Mono.just("redirect:/main")) // Если успешно, редиректим на главную
+                .onErrorResume(PaymentException.class, ex -> {
+                    // 1. Если недостаточно средств, добавляем ошибку в сессию и редиректим
+                    List<String> errors = new ArrayList<>();
+                    errors.add(ex.getMessage());
+                    session.getAttributes().put("transferOtherErrors", errors);
+                    return Mono.just("redirect:/main");
+                })
+                .onErrorResume(Exception.class, ex -> {
+                    // 2. Для остальных ошибок показываем экран с описанием ошибки
+                    // Вместо редиректа на "redirect:/main", возвращаем имя шаблона ошибки
+                    // или можно добавить ошибку в сессию и редиректить на специальную страницу ошибки.
 
+                    // Пример 1: Редирект на специальную страницу, передавая ошибку через сессию/query param
+                    session.getAttributes().put("generalError", ex.getMessage());
+                    return Mono.just("redirect:/errorPage");
 
-        return Mono.just("redirect:/main");
+                    // Пример 2: Возвращаем имя представления (например, "errorTemplate.html")
+                    // return Mono.just("errorTemplate");
+                });
     }
 
 

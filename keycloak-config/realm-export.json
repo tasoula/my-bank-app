@@ -556,6 +556,11 @@
       "realmRoles": [
         "default-roles-master"
       ],
+      "clientRoles": {
+        "accounts-service": [
+          "Accounts-access"
+        ]
+      },
       "notBefore": 0,
       "groups": []
     }
@@ -1133,7 +1138,9 @@
         "oidc.ciba.grant.enabled": "false",
         "client.secret.creation.time": "1765917268",
         "backchannel.logout.session.required": "true",
+        "frontchannel.logout.session.required": "true",
         "oauth2.device.authorization.grant.enabled": "false",
+        "display.on.consent.screen": "false",
         "backchannel.logout.revoke.offline.tokens": "false"
       },
       "authenticationFlowBindingOverrides": {},
@@ -1145,6 +1152,7 @@
         "acr",
         "profile",
         "roles",
+        "accounts",
         "basic",
         "email"
       ],
