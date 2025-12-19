@@ -1,12 +1,14 @@
 package io.github.tasoula.accounts.service;
 
 import io.github.tasoula.accounts.dto.CashOperationDto;
+import io.github.tasoula.accounts.dto.TransferOperationDto;
 import io.github.tasoula.accounts.exceptions.PaymentException;
 import io.github.tasoula.accounts.exceptions.UserNotFoundException;
 import io.github.tasoula.accounts.model.User;
 import io.github.tasoula.accounts.repository.AccountsRepository;
 import io.micrometer.common.util.StringUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -67,5 +69,24 @@ public class AccountsService {
         }
         user.setBalance(currentBalance.subtract(dto.getAmount()));
         repository.save(user);
+    }
+
+    @Transactional
+    public void transfer(TransferOperationDto dto) {
+        User sender = repository.findByLogin(dto.getLoginFrom())
+                .orElseThrow(() -> new UserNotFoundException(dto.getLoginFrom()));
+
+        BigDecimal amount = dto.getAmount();
+        if(sender.getBalance().compareTo(amount) < 0){
+            throw new PaymentException("Недостаточно средств");
+        }
+
+        sender.setBalance(sender.getBalance().subtract(amount));
+        repository.save(sender);
+
+        User recipient = repository.findByLogin(dto.getLoginTo())
+                .orElseThrow(() -> new UserNotFoundException(dto.getLoginTo()));
+        recipient.setBalance(recipient.getBalance().add(amount));
+        repository.save(recipient);
     }
 }
