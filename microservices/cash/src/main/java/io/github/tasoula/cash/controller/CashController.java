@@ -32,12 +32,7 @@ public class CashController {
                 .attributes(clientRegistrationId("cash"))
                 .body(new CashOperationDto(login, amount))
                 .retrieve()
-                .onStatus(HttpStatusCode::is2xxSuccessful, (request, response) -> System.out.println("------200 OK"))
-                .onStatus(HttpStatusCode::is4xxClientError, (request, response) -> System.out.println("------" + response.getStatusText()))
-                .onStatus(HttpStatusCode::is5xxServerError, (request, response) -> System.out.println("------" + response.getStatusText()))
-              //  .onStatus(status -> !status.is2xxSuccessful(), this::handlePaymentErrorStatus)
-               // .bodyToMono(Void.class);
-                    .toBodilessEntity();
+                .toBodilessEntity();
     }
 
     @PostMapping("/withdraw")
